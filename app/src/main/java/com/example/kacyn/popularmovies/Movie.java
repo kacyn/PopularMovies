@@ -8,6 +8,7 @@ import android.os.Parcelable;
  */
 public class Movie implements Parcelable {
 
+    int mMovieId;
     String mTitle;
     String mReleaseDate;
     double mVoteAvg;
@@ -19,6 +20,7 @@ public class Movie implements Parcelable {
     }
 
     public void writeToParcel(Parcel out, int flags) {
+        out.writeInt(mMovieId);
         out.writeString(mTitle);
         out.writeString(mReleaseDate);
         out.writeDouble(mVoteAvg);
@@ -36,7 +38,8 @@ public class Movie implements Parcelable {
         }
     };
 
-    public Movie(String title, String releaseDate, double voteAvg, String synopsis, String posterUrl){
+    public Movie(int movieId, String title, String releaseDate, double voteAvg, String synopsis, String posterUrl){
+        mMovieId = movieId;
         mTitle = title;
         mReleaseDate = releaseDate;
         mVoteAvg = voteAvg;
@@ -45,6 +48,7 @@ public class Movie implements Parcelable {
     }
 
     private Movie(Parcel in){
+        mMovieId = in.readInt();
         mTitle = in.readString();
         mReleaseDate = in.readString();
         mVoteAvg = in.readDouble();
