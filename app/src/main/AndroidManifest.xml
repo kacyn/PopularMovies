@@ -35,6 +35,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.kacyn.popularmovies.MainActivity" />
         </activity>
+
+        <provider
+            android:authorities="com.example.kacyn.popularmovies"
+            android:name="com.example.kacyn.popularmovies.data.MovieProvider" />
     </application>
 
 </manifest>

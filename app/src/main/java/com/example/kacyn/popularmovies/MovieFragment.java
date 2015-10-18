@@ -1,5 +1,7 @@
 package com.example.kacyn.popularmovies;
 
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -14,6 +16,8 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
+import com.example.kacyn.popularmovies.data.MovieContract;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,6 +29,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Vector;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -50,11 +55,20 @@ public class MovieFragment extends Fragment {
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+
+                /*Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
+
+                if(cursor != null) {
+                    Intent detailIntent = new Intent(getActivity(), DetailActivity.class)
+                            .setData(MovieContract.MovieEntry.buildMovieWithUri(cursor.getString(COL_POSTER_URI));
+                    startActivity(detailIntent);
+                }*/
+
                 Intent detailIntent = new Intent(getActivity(), DetailActivity.class);
 
                 //launch detail view
-                detailIntent.putExtra("MovieIntent", movieArray.get(i));
+                detailIntent.putExtra("MovieIntent", movieArray.get(position));
                 startActivity(detailIntent);
             }
         });
@@ -63,7 +77,7 @@ public class MovieFragment extends Fragment {
     }
 
     private void updateMovieData(){
-        FetchMovieTask fetchMovieTask = new FetchMovieTask();
+        FetchMovieTask fetchMovieTask = new FetchMovieTask(getActivity(), mMovieAdapter);
 
         //retrieve sort preferences
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -78,11 +92,23 @@ public class MovieFragment extends Fragment {
         updateMovieData();
     }
 
-    public class FetchMovieTask extends AsyncTask<String, String, Movie[]> {
+    public class FetchMovieTask extends AsyncTask<String, Void, Movie[]> {
 
         private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
 
+        private final Context mContext;
+        private ImageAdapter mMovieAdapter;
+
+        public FetchMovieTask(Context context, ImageAdapter movieAdapter) {
+            Log.v(LOG_TAG, "in constructor ");
+
+            mContext = context;
+            mMovieAdapter = movieAdapter;
+
+        }
+
         protected Movie[] doInBackground(String... params){
+            int numMoviesFetched = 15;
             String criterion = "";
             String order = "desc";
             int minVotes = 50;
@@ -108,7 +134,7 @@ public class MovieFragment extends Fragment {
                         .appendPath("movie")
                         .appendQueryParameter("sort_by", criterion + "." + order)
                         .appendQueryParameter("vote_count.gte", "" + minVotes)
-                        .appendQueryParameter("api_key", getString(R.string.api_key));
+                        .appendQueryParameter("api_key", mContext.getString(R.string.api_key));
 
                 URL url = new URL(builder.build().toString());
 
@@ -139,13 +165,18 @@ public class MovieFragment extends Fragment {
                     return null;
                 }
                 movieJsonStr = buffer.toString();
+                return getMovieDataFromJson(movieJsonStr, numMoviesFetched);
 
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
                 // If the code didn't successfully get the weather data, there's no point in attemping
                 // to parse it.
                 return null;
-            } finally {
+            } catch(JSONException e)
+            {
+                Log.e(LOG_TAG, e.getMessage(), e);
+                e.printStackTrace();
+            }finally {
                 if (urlConnection != null) {
                     urlConnection.disconnect();
                 }
@@ -156,15 +187,6 @@ public class MovieFragment extends Fragment {
                         Log.e(LOG_TAG, "Error closing stream", e);
                     }
                 }
-            }
-
-            try {
-                return getMovieDataFromJson(movieJsonStr, mNumMoviesFetched);
-            }
-            catch(JSONException e)
-            {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
             }
 
             return null;
@@ -208,6 +230,9 @@ public class MovieFragment extends Fragment {
             JSONObject movieJson = new JSONObject(movieJsonStr);
             JSONArray movieArray = movieJson.getJSONArray(RESULTS);
 
+            // Insert the new review information into the database
+            Vector<ContentValues> cVVector = new Vector<ContentValues>(movieArray.length());
+
             Movie[] results = new Movie[numMovies];
 
             for(int i = 0; i < numMovies; i++) {
@@ -221,8 +246,29 @@ public class MovieFragment extends Fragment {
                 synopsis = movieData.getString(SYNOPSIS);
                 posterUrl = "http://image.tmdb.org/t/p/w342" + movieData.getString(POSTER_URL);
 
+                ContentValues movieValues = new ContentValues();
+
+                movieValues.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movieId);
+                movieValues.put(MovieContract.MovieEntry.COLUMN_TITLE, title);
+                movieValues.put(MovieContract.MovieEntry.COLUMN_RELEASE_DATE, releaseDate);
+                movieValues.put(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE, voteAvg);
+                movieValues.put(MovieContract.MovieEntry.COLUMN_SYNOPSIS, synopsis);
+                movieValues.put(MovieContract.MovieEntry.COLUMN_POSTER_URL, posterUrl);
+
+                cVVector.add(movieValues);
+
                 results[i] = new Movie(movieId, title, releaseDate, voteAvg, synopsis, posterUrl);
             }
+
+            // add to database
+            if ( cVVector.size() > 0 ) {
+                ContentValues[] cvArray = new ContentValues[cVVector.size()];
+                cVVector.toArray(cvArray);
+                mContext.getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, cvArray);
+            }
+
+            Log.v(LOG_TAG, "Fetch movie task Complete. " + cVVector.size() + " Inserted");
+
             return results;
         }
     }

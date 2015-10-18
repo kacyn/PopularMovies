@@ -1,41 +1,85 @@
 package com.example.kacyn.popularmovies;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
+import com.example.kacyn.popularmovies.data.MovieContract;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class DetailActivityFragment extends Fragment {
+public class DetailActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    private static String LOG_TAG = DetailActivityFragment.class.getSimpleName();
+
+    private static final int DETAIL_LOADER = 0;
+    private static final int REVIEW_LOADER = 1;
+    private static final int TRAILER_LOADER = 2;
+    // For the forecast view we're showing only a small subset of the stored data.
+    // Specify the columns we need.
+
+    private static final String[] DETAIL_COLUMNS = {
+            MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
+            MovieContract.MovieEntry.COLUMN_POSTER_URL,
+            MovieContract.MovieEntry.COLUMN_TITLE,
+            MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE,
+            MovieContract.MovieEntry.COLUMN_RELEASE_DATE,
+            MovieContract.MovieEntry.COLUMN_SYNOPSIS
+    };
+
+    private static final String[] REVIEW_COLUMNS = {
+            // In this case the id needs to be fully qualified with a table name, since
+            // the content provider joins the location & weather tables in the background
+            // (both have an _id column)
+            // On the one hand, that's annoying.  On the other, you can search the weather table
+            // using the location set by the user, which is only in the Location table.
+            // So the convenience is worth it.
+            MovieContract.ReviewEntry.TABLE_NAME + "." + MovieContract.ReviewEntry._ID,
+            MovieContract.ReviewEntry.COLUMN_AUTHOR,
+            MovieContract.ReviewEntry.COLUMN_CONTENT
+    };
+
+    private static final String[] TRAILER_COLUMNS = {
+            MovieContract.TrailerEntry.TABLE_NAME + "." + MovieContract.TrailerEntry._ID,
+            MovieContract.TrailerEntry.COLUMN_YOUTUBE_KEY
+    };
+
+    // These indices are tied to FORECAST_COLUMNS.  If FORECAST_COLUMNS changes, these
+    // must change.
+    static final int COL_DETAIL_ID = 0;
+    static final int COL_DETAIL_POSTER_URL = 1;
+    static final int COL_DETAIL_TITLE = 2;
+    static final int COL_DETAIL_VOTE_AVERAGE = 3;
+    static final int COL_DETAIL_RELEASE_DATE = 4;
+    static final int COL_DETAIL_SYNOPSIS = 5;
+
+    static final int COL_REVIEW_ID = 0;
+    static final int COL_REVIEW_AUTHOR = 1;
+    static final int COL_REVIEW_CONTENT = 2;
+
+    static final int COL_TRAILER_ID = 0;
+    static final int COL_TRAILER_KEY = 1;
 
     private Movie mMovie;
 
     private int mMovieId;
+
+    private DetailAdapter mDetailAdapter;
+    private ListView mDetailListView;
 
     private ReviewAdapter mReviewAdapter;
     private ListView mReviewListView;
@@ -60,35 +104,40 @@ public class DetailActivityFragment extends Fragment {
 
         mMovieId = mMovie.mMovieId;
 
-        ImageView posterImageView = (ImageView) rootView.findViewById(R.id.poster_image);
-        Picasso.with(getActivity()).load(mMovie.mPosterUrl).into(posterImageView);
+        mDetailAdapter = new DetailAdapter(getActivity(), null, 0);
+        mDetailListView = (ListView) rootView.findViewById(R.id.listview_detail);
+        mDetailListView.setAdapter(mDetailAdapter);
 
-        // Create the text views
-        TextView titleTextView = (TextView) rootView.findViewById(R.id.title_text);
-        titleTextView.setText(mMovie.mTitle);
 
-        TextView voteAvgTextView = (TextView) rootView.findViewById(R.id.vote_avg_text);
-        voteAvgTextView.setText("Vote Average: " + mMovie.mVoteAvg);
-
-        TextView releaseDateTextView = (TextView) rootView.findViewById(R.id.release_date_text);
-        releaseDateTextView.setText("Release Date: " + mMovie.mReleaseDate);
-
-        TextView synopsisTextView = (TextView) rootView.findViewById(R.id.synopsis_text);
-        synopsisTextView.setText(mMovie.mSynopsis);
-
-        mTrailerAdapter = new TrailerAdapter(getActivity(), mNumTrailersFetched, mTrailerUrlArray);
+       // mTrailerAdapter = new TrailerAdapter(getActivity(), mNumTrailersFetched, mTrailerUrlArray);
+        mTrailerAdapter = new TrailerAdapter(getActivity(), null, 0);
         mTrailerListView = (ListView) rootView.findViewById(R.id.listview_trailer);
         mTrailerListView.setAdapter(mTrailerAdapter);
+
+        //mAuthorView = (TextView) rootView.findViewById(R.id.list_item_review_author);
+        //mContentView = (TextView) rootView.findViewById(R.id.list_item_review_content);
 
         mTrailerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + mTrailerUrlArray.get(position)));
-                startActivity(youtubeIntent);
+
+                Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
+                if (cursor != null) {
+
+                    Log.v(LOG_TAG, "poster url: " + cursor.getString(COL_DETAIL_POSTER_URL));
+
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + cursor.getString(COL_DETAIL_POSTER_URL)));
+                    startActivity(intent);
+                }
+
+                //Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + mTrailerUrlArray.get(position)));
+                //startActivity(youtubeIntent);
             }
         });
 
-        mReviewAdapter = new ReviewAdapter(getActivity(), mNumReviewsFetched, mReviewArray);
+        mReviewAdapter = new ReviewAdapter(getActivity(), null, 0);
+
+        //mReviewAdapter = new ReviewAdapter(getActivity(), mNumReviewsFetched, mReviewArray);
         mReviewListView = (ListView) rootView.findViewById(R.id.listview_review);
         mReviewListView.setAdapter(mReviewAdapter);
 
@@ -96,254 +145,114 @@ public class DetailActivityFragment extends Fragment {
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        getLoaderManager().initLoader(DETAIL_LOADER, null, this);
+        getLoaderManager().initLoader(REVIEW_LOADER, null, this);
+        getLoaderManager().initLoader(TRAILER_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
     public void onStart(){
         super.onStart();
+
         updateReviewData();
+        //getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
         updateTrailerData();
     }
 
     private void updateReviewData(){
-        FetchReviewTask fetchReviewTask = new FetchReviewTask();
-        fetchReviewTask.execute();
+        Log.v(LOG_TAG, "In update review data");
+
+        FetchReviewTask fetchReviewTask = new FetchReviewTask(getActivity());
+        fetchReviewTask.execute(mMovieId);
     }
 
     private void updateTrailerData(){
-        FetchTrailerTask fetchTrailerTask = new FetchTrailerTask();
-        fetchTrailerTask.execute();
+        FetchTrailerTask fetchTrailerTask = new FetchTrailerTask(getActivity());
+        fetchTrailerTask.execute(mMovieId);
     }
 
-    public class FetchReviewTask extends AsyncTask<Void, Void, Void> {
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderId, Bundle bundle) {
 
-        private final String LOG_TAG = FetchReviewTask.class.getSimpleName();
+        Log.v(LOG_TAG, "in on create loader");
 
-        protected Void doInBackground(Void... params){
+        Uri detailUri = MovieContract.MovieEntry.buildDetailWithMovie(mMovieId);
 
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
+        Log.v(LOG_TAG, "detail uri: " + detailUri);
 
-            // Will contain the raw JSON response as a string.
-            String reviewJsonStr = null;
+        Uri reviewUri = MovieContract.ReviewEntry.buildReviewWithMovie(mMovieId);
+        Uri trailerUri = MovieContract.TrailerEntry.buildTrailerWithMovie(mMovieId);
 
-            try {
-                Uri.Builder builder = new Uri.Builder();
-                builder.scheme("http")
-                        .authority("api.themoviedb.org")
-                        .appendPath("3")
-                        .appendPath("movie")
-                        .appendPath("" + mMovieId)
-                        .appendPath("reviews")
-                        .appendQueryParameter("api_key", getString(R.string.api_key));
-
-                URL url = new URL(builder.build().toString());
-
-                // Create the request and open the connection
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                reviewJsonStr = buffer.toString();
-
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the weather data, there's no point in attemping
-                // to parse it.
+        switch(loaderId) {
+            case DETAIL_LOADER:
+                Log.v(LOG_TAG, "returning detail loader");
+                return new CursorLoader(
+                        getActivity(),
+                        detailUri,
+                        DETAIL_COLUMNS,
+                        null,
+                        null,
+                        null
+                );
+            case REVIEW_LOADER:
+                return new CursorLoader(
+                        getActivity(),
+                        reviewUri,
+                        REVIEW_COLUMNS,
+                        null,
+                        null,
+                        null);
+            case TRAILER_LOADER:
+                return new CursorLoader(
+                        getActivity(),
+                        trailerUri,
+                        TRAILER_COLUMNS,
+                        null,
+                        null,
+                        null);
+            default:
                 return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-
-            try {
-                getReviewDataFromJson(reviewJsonStr);
-            }
-            catch(JSONException e)
-            {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
-
-            return null;
         }
+        //Log.v("Review Adapter", "review uri: " + reviewUri);
+    }
 
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            //update view
-            mReviewAdapter.update(mNumReviewsFetched, mReviewArray);
-        }
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        Log.v(LOG_TAG, "in on load finished");
 
-        private void getReviewDataFromJson(String reviewJsonStr) throws JSONException {
-            mReviewArray.clear();
-
-            final String RESULTS = "results";
-            final String AUTHOR = "author";
-            final String CONTENT = "content";
-            final String URL = "url";
-
-            String author;
-            String content;
-            String url;
-
-            JSONObject reviewJson = new JSONObject(reviewJsonStr);
-            JSONArray reviewArray = reviewJson.getJSONArray(RESULTS);
-
-            mNumReviewsFetched = reviewArray.length();
-
-            Log.v("Review Adapter", "num reviews fetched json: " + mNumReviewsFetched);
-
-            for(int i = 0; i < mNumReviewsFetched; i++) {
-                JSONObject reviewData = reviewArray.getJSONObject(i);
-
-                author = reviewData.getString(AUTHOR);
-                content = reviewData.getString(CONTENT);
-                url = reviewData.getString(URL);
-
-                mReviewArray.add(new Review(author, content, url));
-            }
+        switch (loader.getId()) {
+            case DETAIL_LOADER:
+                mDetailAdapter.swapCursor(cursor);
+                break;
+            case REVIEW_LOADER:
+                mReviewAdapter.swapCursor(cursor);
+                break;
+            case TRAILER_LOADER:
+                mTrailerAdapter.swapCursor(cursor);
+                break;
+            default:
+                break;
         }
     }
 
-    public class FetchTrailerTask extends AsyncTask<Void, Void, Void> {
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        Log.v(LOG_TAG, "in onLoaderReset");
 
-        private final String LOG_TAG = FetchTrailerTask.class.getSimpleName();
-
-        protected Void doInBackground(Void... params){
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            // Will contain the raw JSON response as a string.
-            String trailerJsonStr = null;
-
-            try {
-                Uri.Builder builder = new Uri.Builder();
-                builder.scheme("http")
-                        .authority("api.themoviedb.org")
-                        .appendPath("3")
-                        .appendPath("movie")
-                        .appendPath("" + mMovieId)
-                        .appendPath("videos")
-                        .appendQueryParameter("api_key", getString(R.string.api_key));
-
-                URL url = new URL(builder.build().toString());
-
-                // Create the request and open the connection
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                trailerJsonStr = buffer.toString();
-
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the weather data, there's no point in attemping
-                // to parse it.
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-
-            try {
-                getTrailerDataFromJson(trailerJsonStr);
-            }
-            catch(JSONException e)
-            {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            //update view
-            mTrailerAdapter.update(mNumTrailersFetched, mTrailerUrlArray);
-        }
-
-        private void getTrailerDataFromJson(String trailerJsonStr) throws JSONException {
-            mTrailerUrlArray.clear();
-
-            final String RESULTS = "results";
-            final String KEY = "key";
-
-            String key;
-
-            JSONObject trailerJson = new JSONObject(trailerJsonStr);
-            JSONArray trailerArray = trailerJson.getJSONArray(RESULTS);
-
-            mNumTrailersFetched = trailerArray.length();
-
-            Log.v("Trailer Adapter", "num trailers fetched json: " + mNumTrailersFetched);
-
-            for(int i = 0; i < mNumTrailersFetched; i++) {
-                JSONObject reviewData = trailerArray.getJSONObject(i);
-
-                key = reviewData.getString(KEY);
-
-                mTrailerUrlArray.add(key);
-            }
+        switch (loader.getId()) {
+            case DETAIL_LOADER:
+                mDetailAdapter.swapCursor(null);
+                break;
+            case REVIEW_LOADER:
+                mReviewAdapter.swapCursor(null);
+                break;
+            case TRAILER_LOADER:
+                mTrailerAdapter.swapCursor(null);
+                break;
+            default:
+                break;
         }
     }
 }

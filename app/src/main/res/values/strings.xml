@@ -20,6 +20,8 @@
         <item>"vote_average"</item>
     </string-array>
 
+    <string name="content_authority">com.example.kacyn.popularmovies</string>
+
     <string name="api_key">c162bceb4e62d58629e8d4b662f4ca72</string>
 
 </resources>
