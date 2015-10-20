@@ -2,8 +2,6 @@ package com.example.kacyn.popularmovies;
 
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -14,10 +12,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.example.kacyn.popularmovies.data.MovieContract;
 import com.example.kacyn.popularmovies.data.MovieDbHelper;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -36,7 +38,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     // For the forecast view we're showing only a small subset of the stored data.
     // Specify the columns we need.
 
-    private static final String[] DETAIL_COLUMNS = {
+    /*private static final String[] DETAIL_COLUMNS = {
             MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
             MovieContract.MovieEntry.COLUMN_POSTER_URL,
             MovieContract.MovieEntry.COLUMN_TITLE,
@@ -48,10 +50,10 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
             MovieContract.ReviewEntry.COLUMN_CONTENT,
             //MovieContract.TrailerEntry.TABLE_NAME + "." + MovieContract.TrailerEntry._ID,
             MovieContract.TrailerEntry.COLUMN_YOUTUBE_KEY
-    };
+    };*/
 
 
-    /*private static final String[] DETAIL_COLUMNS = {
+    private static final String[] DETAIL_COLUMNS = {
             MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
             MovieContract.MovieEntry.COLUMN_POSTER_URL,
             MovieContract.MovieEntry.COLUMN_TITLE,
@@ -75,7 +77,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     private static final String[] TRAILER_COLUMNS = {
             MovieContract.TrailerEntry.TABLE_NAME + "." + MovieContract.TrailerEntry._ID,
             MovieContract.TrailerEntry.COLUMN_YOUTUBE_KEY
-    };*/
+    };
 
     // These indices are tied to FORECAST_COLUMNS.  If FORECAST_COLUMNS changes, these
     // must change.
@@ -86,17 +88,17 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     static final int COL_DETAIL_RELEASE_DATE = 4;
     static final int COL_DETAIL_SYNOPSIS = 5;
     //static final int COL_REVIEW_ID = 0;
-    static final int COL_REVIEW_AUTHOR = 6;
+    /*static final int COL_REVIEW_AUTHOR = 6;
     static final int COL_REVIEW_CONTENT = 7;
     //static final int COL_TRAILER_ID = 0;
-    static final int COL_TRAILER_KEY = 8;
+    static final int COL_TRAILER_KEY = 8;*/
 
-    /*static final int COL_REVIEW_ID = 0;
+    static final int COL_REVIEW_ID = 0;
     static final int COL_REVIEW_AUTHOR = 1;
     static final int COL_REVIEW_CONTENT = 2;
 
     static final int COL_TRAILER_ID = 0;
-    static final int COL_TRAILER_KEY = 1;*/
+    static final int COL_TRAILER_KEY = 1;
 
     private Movie mMovie;
 
@@ -114,6 +116,12 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     private ListView mTrailerListView;
     private int mNumTrailersFetched;
     private ArrayList<String> mTrailerUrlArray = new ArrayList<String>();
+
+    public ImageView mPosterView;
+    public TextView mTitleView;
+    public TextView mVoteAvgView;
+    public TextView mReleaseDateView;
+    public TextView mSynopsisView;
 
     public DetailActivityFragment() {
     }
@@ -141,12 +149,18 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
             updateData(mMovieId);
         }*/
 
-        Log.v(LOG_TAG, "review count: " + getReviewCount());
+        //Log.v(LOG_TAG, "review count: " + getReviewCount());
 
-        mDetailAdapter = new DetailAdapter(getActivity(), null, 0, getReviewCount());
+       /* mDetailAdapter = new DetailAdapter(getActivity(), null, 0);
         mDetailListView = (ListView) rootView.findViewById(R.id.listview_detail);
-        mDetailListView.setAdapter(mDetailAdapter);
-        /*
+        mDetailListView.setAdapter(mDetailAdapter);*/
+
+        mPosterView = (ImageView) rootView.findViewById(R.id.poster_image);
+        mTitleView = (TextView) rootView.findViewById(R.id.title_text);
+        mVoteAvgView = (TextView) rootView.findViewById(R.id.vote_avg_text);
+        mReleaseDateView = (TextView) rootView.findViewById(R.id.release_date_text);
+        mSynopsisView = (TextView) rootView.findViewById(R.id.synopsis_text);
+
         mTrailerAdapter = new TrailerAdapter(getActivity(), null, 0);
         mTrailerListView = (ListView) rootView.findViewById(R.id.listview_trailer);
         mTrailerListView.setAdapter(mTrailerAdapter);
@@ -170,15 +184,15 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         mReviewAdapter = new ReviewAdapter(getActivity(), null, 0);
         mReviewListView = (ListView) rootView.findViewById(R.id.listview_review);
         mReviewListView.setAdapter(mReviewAdapter);
-*/
+
         return rootView;
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
-        //getLoaderManager().initLoader(REVIEW_LOADER, null, this);
-        //getLoaderManager().initLoader(TRAILER_LOADER, null, this);
+        getLoaderManager().initLoader(REVIEW_LOADER, null, this);
+        getLoaderManager().initLoader(TRAILER_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
 
@@ -188,7 +202,9 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
         //updateReviewData();
         //updateTrailerData();
-        //getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
+        getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
+        getLoaderManager().restartLoader(REVIEW_LOADER, null, this);
+        getLoaderManager().restartLoader(TRAILER_LOADER, null, this);
     }
 
    /* void onSortPrefsChanged() {
@@ -199,7 +215,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
     }
 */
-    void updateData(int movieId) {
+ /*   void updateData(int movieId) {
         Log.v(LOG_TAG, "In update data");
         updateReviewData(movieId);
         updateTrailerData(movieId);
@@ -216,13 +232,13 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     private void updateTrailerData(int movieId){
         FetchTrailerTask fetchTrailerTask = new FetchTrailerTask(getActivity());
         fetchTrailerTask.execute(movieId);
-    }
+    }*/
 
-    public long getReviewCount() {
+   /* public long getReviewCount() {
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         String selection = "" + MovieContract.ReviewEntry.COLUMN_MOVIE_ID + " = " + mMovieId;
         return DatabaseUtils.queryNumEntries(db, MovieContract.ReviewEntry.TABLE_NAME, selection);
-    }
+    }*/
 
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle bundle) {
@@ -230,7 +246,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         Log.v(LOG_TAG, "in on create loader");
 
         Uri detailUri = MovieContract.MovieEntry.buildDetailWithMovie(mMovieId);
-
+/*
         Log.v(LOG_TAG, "detail uri: " + detailUri);
 
         return new CursorLoader(
@@ -240,9 +256,9 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                 null,
                 null,
                 null
-        );
+        );*/
 
-        /*Uri reviewUri = MovieContract.ReviewEntry.buildReviewWithMovie(mMovieId);
+        Uri reviewUri = MovieContract.ReviewEntry.buildReviewWithMovie(mMovieId);
         Uri trailerUri = MovieContract.TrailerEntry.buildTrailerWithMovie(mMovieId);
 
         switch(loaderId) {
@@ -274,7 +290,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                         null);
             default:
                 return null;
-        }*/
+        }
         //Log.v("Review Adapter", "review uri: " + reviewUri);
     }
 
@@ -284,7 +300,24 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
         switch (loader.getId()) {
             case DETAIL_LOADER:
-                mDetailAdapter.swapCursor(cursor);
+                if(cursor != null && cursor.moveToFirst()) {
+
+                    Picasso.with(getActivity()).load(cursor.getString(DetailActivityFragment.COL_DETAIL_POSTER_URL)).into(mPosterView);
+
+                    String title = cursor.getString(DetailActivityFragment.COL_DETAIL_TITLE);
+                    mTitleView.setText(title);
+
+                    double voteAvg = cursor.getDouble(DetailActivityFragment.COL_DETAIL_VOTE_AVERAGE);
+                    mVoteAvgView.setText("Vote Average: " + voteAvg);
+
+                    String releaseDate = cursor.getString(DetailActivityFragment.COL_DETAIL_RELEASE_DATE);
+                    mReleaseDateView.setText("Release Date: " + releaseDate);
+
+                    String synopsis = cursor.getString(DetailActivityFragment.COL_DETAIL_SYNOPSIS);
+                    mSynopsisView.setText(synopsis);
+                }
+
+                //mDetailAdapter.swapCursor(cursor);
                 break;
             case REVIEW_LOADER:
                 mReviewAdapter.swapCursor(cursor);
@@ -303,7 +336,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
         switch (loader.getId()) {
             case DETAIL_LOADER:
-                mDetailAdapter.swapCursor(null);
+                //mDetailAdapter.swapCursor(null);
                 break;
             case REVIEW_LOADER:
                 mReviewAdapter.swapCursor(null);

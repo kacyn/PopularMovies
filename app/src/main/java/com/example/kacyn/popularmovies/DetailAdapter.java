@@ -15,7 +15,75 @@ import com.squareup.picasso.Picasso;
 /**
  * Created by Kacyn on 10/17/2015.
  */
-public class DetailAdapter extends CursorAdapter{
+
+
+public class DetailAdapter extends CursorAdapter {
+
+    LayoutInflater mLayoutInflater;
+
+    private final String LOG_TAG = DetailAdapter.class.getSimpleName();
+
+    public DetailAdapter(Context context, Cursor c, int flags) {
+        super(context, c, flags);
+
+        mLayoutInflater = LayoutInflater.from(context);
+    }
+
+    @Override
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+
+        Log.v(LOG_TAG, "In new view");
+
+        int layoutId;
+        View view;
+
+        layoutId = R.layout.list_item_detail;
+        view = mLayoutInflater.inflate(layoutId, parent, false);
+        DetailViewHolder detailViewHolder = new DetailViewHolder(view);
+        view.setTag(detailViewHolder);
+        return view;
+    }
+
+    @Override
+    public void bindView(View view, Context context, Cursor cursor) {
+
+        Log.v(LOG_TAG, "In bind view");
+
+        DetailViewHolder detailViewHolderiewHolder = (DetailViewHolder) view.getTag();
+
+        Picasso.with(context).load(cursor.getString(DetailActivityFragment.COL_DETAIL_POSTER_URL)).into(detailViewHolderiewHolder.posterView);
+
+        String title = cursor.getString(DetailActivityFragment.COL_DETAIL_TITLE);
+        detailViewHolderiewHolder.titleView.setText(title);
+
+        double voteAvg = cursor.getDouble(DetailActivityFragment.COL_DETAIL_VOTE_AVERAGE);
+        detailViewHolderiewHolder.voteAvgView.setText("Vote Average: " + voteAvg);
+
+        String releaseDate = cursor.getString(DetailActivityFragment.COL_DETAIL_RELEASE_DATE);
+        detailViewHolderiewHolder.releaseDateView.setText("Release Date: " + releaseDate);
+
+        String synopsis = cursor.getString(DetailActivityFragment.COL_DETAIL_SYNOPSIS);
+        detailViewHolderiewHolder.synopsisView.setText(synopsis);
+    }
+
+    public static class DetailViewHolder {
+        public final ImageView posterView;
+        public final TextView titleView;
+        public final TextView voteAvgView;
+        public final TextView releaseDateView;
+        public final TextView synopsisView;
+
+        public DetailViewHolder(View view) {
+            posterView = (ImageView) view.findViewById(R.id.poster_image);
+            titleView = (TextView) view.findViewById(R.id.title_text);
+            voteAvgView = (TextView) view.findViewById(R.id.vote_avg_text);
+            releaseDateView = (TextView) view.findViewById(R.id.release_date_text);
+            synopsisView = (TextView) view.findViewById(R.id.synopsis_text);
+        }
+    }
+}
+
+/*public class DetailAdapter extends CursorAdapter{
 
     private static final int VIEW_TYPE_DETAIL = 0;
     private static final int VIEW_TYPE_REVIEW = 1;
@@ -167,3 +235,4 @@ public class DetailAdapter extends CursorAdapter{
         }
     }
 }
+*/
