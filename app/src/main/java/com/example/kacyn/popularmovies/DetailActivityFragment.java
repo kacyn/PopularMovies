@@ -2,6 +2,8 @@ package com.example.kacyn.popularmovies;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -12,10 +14,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.example.kacyn.popularmovies.data.MovieContract;
+import com.example.kacyn.popularmovies.data.MovieDbHelper;
 
 import java.util.ArrayList;
 
@@ -26,6 +28,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
     private static String LOG_TAG = DetailActivityFragment.class.getSimpleName();
 
+    private MovieDbHelper mOpenHelper;
+
     private static final int DETAIL_LOADER = 0;
     private static final int REVIEW_LOADER = 1;
     private static final int TRAILER_LOADER = 2;
@@ -33,6 +37,21 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     // Specify the columns we need.
 
     private static final String[] DETAIL_COLUMNS = {
+            MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
+            MovieContract.MovieEntry.COLUMN_POSTER_URL,
+            MovieContract.MovieEntry.COLUMN_TITLE,
+            MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE,
+            MovieContract.MovieEntry.COLUMN_RELEASE_DATE,
+            MovieContract.MovieEntry.COLUMN_SYNOPSIS,
+            //MovieContract.ReviewEntry.TABLE_NAME + "." + MovieContract.ReviewEntry._ID,
+            MovieContract.ReviewEntry.COLUMN_AUTHOR,
+            MovieContract.ReviewEntry.COLUMN_CONTENT,
+            //MovieContract.TrailerEntry.TABLE_NAME + "." + MovieContract.TrailerEntry._ID,
+            MovieContract.TrailerEntry.COLUMN_YOUTUBE_KEY
+    };
+
+
+    /*private static final String[] DETAIL_COLUMNS = {
             MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
             MovieContract.MovieEntry.COLUMN_POSTER_URL,
             MovieContract.MovieEntry.COLUMN_TITLE,
@@ -56,7 +75,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     private static final String[] TRAILER_COLUMNS = {
             MovieContract.TrailerEntry.TABLE_NAME + "." + MovieContract.TrailerEntry._ID,
             MovieContract.TrailerEntry.COLUMN_YOUTUBE_KEY
-    };
+    };*/
 
     // These indices are tied to FORECAST_COLUMNS.  If FORECAST_COLUMNS changes, these
     // must change.
@@ -66,13 +85,18 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     static final int COL_DETAIL_VOTE_AVERAGE = 3;
     static final int COL_DETAIL_RELEASE_DATE = 4;
     static final int COL_DETAIL_SYNOPSIS = 5;
+    //static final int COL_REVIEW_ID = 0;
+    static final int COL_REVIEW_AUTHOR = 6;
+    static final int COL_REVIEW_CONTENT = 7;
+    //static final int COL_TRAILER_ID = 0;
+    static final int COL_TRAILER_KEY = 8;
 
-    static final int COL_REVIEW_ID = 0;
+    /*static final int COL_REVIEW_ID = 0;
     static final int COL_REVIEW_AUTHOR = 1;
     static final int COL_REVIEW_CONTENT = 2;
 
     static final int COL_TRAILER_ID = 0;
-    static final int COL_TRAILER_KEY = 1;
+    static final int COL_TRAILER_KEY = 1;*/
 
     private Movie mMovie;
 
@@ -94,28 +118,38 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     public DetailActivityFragment() {
     }
 
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mOpenHelper = new MovieDbHelper(getActivity());
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
         Intent intent = getActivity().getIntent();
-        mMovie = intent.getParcelableExtra("MovieIntent");
+        //mMovie = intent.getParcelableExtra("MovieIntent");
 
-        mMovieId = mMovie.mMovieId;
+        //mMovieId = mMovie.mMovieId;
 
-        mDetailAdapter = new DetailAdapter(getActivity(), null, 0);
+        mMovieId = intent.getIntExtra("MovieIntent", -1);
+
+        /*if (savedInstanceState == null && mMovieId != -1) {
+            updateData(mMovieId);
+        }*/
+
+        Log.v(LOG_TAG, "review count: " + getReviewCount());
+
+        mDetailAdapter = new DetailAdapter(getActivity(), null, 0, getReviewCount());
         mDetailListView = (ListView) rootView.findViewById(R.id.listview_detail);
         mDetailListView.setAdapter(mDetailAdapter);
-
-
-       // mTrailerAdapter = new TrailerAdapter(getActivity(), mNumTrailersFetched, mTrailerUrlArray);
+        /*
         mTrailerAdapter = new TrailerAdapter(getActivity(), null, 0);
         mTrailerListView = (ListView) rootView.findViewById(R.id.listview_trailer);
         mTrailerListView.setAdapter(mTrailerAdapter);
-
-        //mAuthorView = (TextView) rootView.findViewById(R.id.list_item_review_author);
-        //mContentView = (TextView) rootView.findViewById(R.id.list_item_review_content);
 
         mTrailerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -130,25 +164,21 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                     startActivity(intent);
                 }
 
-                //Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + mTrailerUrlArray.get(position)));
-                //startActivity(youtubeIntent);
             }
         });
 
         mReviewAdapter = new ReviewAdapter(getActivity(), null, 0);
-
-        //mReviewAdapter = new ReviewAdapter(getActivity(), mNumReviewsFetched, mReviewArray);
         mReviewListView = (ListView) rootView.findViewById(R.id.listview_review);
         mReviewListView.setAdapter(mReviewAdapter);
-
+*/
         return rootView;
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
-        getLoaderManager().initLoader(REVIEW_LOADER, null, this);
-        getLoaderManager().initLoader(TRAILER_LOADER, null, this);
+        //getLoaderManager().initLoader(REVIEW_LOADER, null, this);
+        //getLoaderManager().initLoader(TRAILER_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
 
@@ -156,21 +186,42 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     public void onStart(){
         super.onStart();
 
-        updateReviewData();
+        //updateReviewData();
+        //updateTrailerData();
         //getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
-        updateTrailerData();
     }
 
-    private void updateReviewData(){
+   /* void onSortPrefsChanged() {
+
+        Log.v(LOG_TAG, "in sort prefs changed");
+        updateReviewData(mMovieId);
+        updateTrailerData(mMovieId);
+        getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
+    }
+*/
+    void updateData(int movieId) {
+        Log.v(LOG_TAG, "In update data");
+        updateReviewData(movieId);
+        updateTrailerData(movieId);
+        getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
+    }
+
+    private void updateReviewData(int movieId){
         Log.v(LOG_TAG, "In update review data");
 
         FetchReviewTask fetchReviewTask = new FetchReviewTask(getActivity());
-        fetchReviewTask.execute(mMovieId);
+        fetchReviewTask.execute(movieId);
     }
 
-    private void updateTrailerData(){
+    private void updateTrailerData(int movieId){
         FetchTrailerTask fetchTrailerTask = new FetchTrailerTask(getActivity());
-        fetchTrailerTask.execute(mMovieId);
+        fetchTrailerTask.execute(movieId);
+    }
+
+    public long getReviewCount() {
+        SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+        String selection = "" + MovieContract.ReviewEntry.COLUMN_MOVIE_ID + " = " + mMovieId;
+        return DatabaseUtils.queryNumEntries(db, MovieContract.ReviewEntry.TABLE_NAME, selection);
     }
 
     @Override
@@ -182,7 +233,16 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
         Log.v(LOG_TAG, "detail uri: " + detailUri);
 
-        Uri reviewUri = MovieContract.ReviewEntry.buildReviewWithMovie(mMovieId);
+        return new CursorLoader(
+                getActivity(),
+                detailUri,
+                DETAIL_COLUMNS,
+                null,
+                null,
+                null
+        );
+
+        /*Uri reviewUri = MovieContract.ReviewEntry.buildReviewWithMovie(mMovieId);
         Uri trailerUri = MovieContract.TrailerEntry.buildTrailerWithMovie(mMovieId);
 
         switch(loaderId) {
@@ -214,7 +274,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                         null);
             default:
                 return null;
-        }
+        }*/
         //Log.v("Review Adapter", "review uri: " + reviewUri);
     }
 

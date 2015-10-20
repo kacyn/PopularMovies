@@ -1,5 +1,6 @@
 package com.example.kacyn.popularmovies;
 
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
@@ -31,12 +32,6 @@ public class FetchTrailerTask extends AsyncTask<Integer, Void, Void> {
 
         mContext = context;
     }
-
-   /* @Override
-    protected void onPostExecute(Void aVoid) {
-        //update view
-        mTrailerAdapter.update(mNumTrailersFetched, mTrailerUrlArray);
-    }*/
 
     private void getTrailerDataFromJson(String trailerJsonStr) throws JSONException {
         //mTrailerUrlArray.clear();

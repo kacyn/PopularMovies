@@ -3,12 +3,14 @@ package com.example.kacyn.popularmovies;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,21 +36,68 @@ import java.util.Vector;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MovieFragment extends Fragment {
-    private ImageAdapter mMovieAdapter;
+public class MovieFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
+
+    public static String LOG_TAG = MovieFragment.class.getSimpleName();
+
+    //private ImageAdapter mMovieAdapter;
+    private MovieAdapter mMovieAdapter;
     private int mNumMoviesFetched = 15;
     private ArrayList<Movie> movieArray = new ArrayList<Movie>();
     private ArrayList<String> urlArray = new ArrayList<String>();
 
+    private static final int MOVIE_LOADER = 0;
+    // For the forecast view we're showing only a small subset of the stored data.
+    // Specify the columns we need.
+
+    private static final String[] MOVIE_COLUMNS = {
+            MovieContract.MovieEntry._ID,
+            MovieContract.MovieEntry.COLUMN_POSTER_URL,
+            MovieContract.MovieEntry.COLUMN_MOVIE_ID
+    };
+
+    static final int COL_ID = 0;
+    static final int COL_POSTER_URL = 1;
+    static final int COL_MOVIE_ID = 2;
+
     public MovieFragment() {
+        Log.v(LOG_TAG, "in constructor of movie fragment");
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+
+        //first time view created
+        if(savedInstanceState == null){
+            Log.v(LOG_TAG, "new movie fragment");
+            updateMovieData();
+        }
+        else {
+            Log.v(LOG_TAG, "old movie fragment");
+        }
+
+
+        super.onCreate(savedInstanceState);
+        // Add this line in order for this fragment to handle menu events.
+        setHasOptionsMenu(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mMovieAdapter = new ImageAdapter(getActivity(), mNumMoviesFetched, urlArray);
+        //mMovieAdapter = new ImageAdapter(getActivity(), mNumMoviesFetched, urlArray);
+        mMovieAdapter = new MovieAdapter(getActivity(), null, 0);
+
 
         GridView gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
         gridView.setAdapter(mMovieAdapter);
@@ -65,11 +114,21 @@ public class MovieFragment extends Fragment {
                     startActivity(detailIntent);
                 }*/
 
-                Intent detailIntent = new Intent(getActivity(), DetailActivity.class);
+                /*Intent detailIntent = new Intent(getActivity(), DetailActivity.class);
 
                 //launch detail view
                 detailIntent.putExtra("MovieIntent", movieArray.get(position));
-                startActivity(detailIntent);
+                startActivity(detailIntent);*/
+
+
+                Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
+                if(cursor != null) {
+                    Intent detailIntent = new Intent(getActivity(), DetailActivity.class);
+
+                    //launch detail view
+                    detailIntent.putExtra("MovieIntent", cursor.getInt(COL_MOVIE_ID));
+                    startActivity(detailIntent);
+                }
             }
         });
 
@@ -77,19 +136,46 @@ public class MovieFragment extends Fragment {
     }
 
     private void updateMovieData(){
-        FetchMovieTask fetchMovieTask = new FetchMovieTask(getActivity(), mMovieAdapter);
+        FetchMovieTask fetchMovieTask = new FetchMovieTask(getActivity());//, mMovieAdapter);
+        fetchMovieTask.execute(Utility.getSortPreferences(getActivity()));
+        getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
+    }
 
-        //retrieve sort preferences
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String sortCriterion = sharedPreferences.getString(getString(R.string.pref_sort_key), getString(R.string.pref_sort_default));
+    void onSortPrefsChanged() {
+        Log.v(LOG_TAG, "in sort preferences");
+        updateMovieData();
 
-        fetchMovieTask.execute(sortCriterion);
+        //updateReviewData();
+        //updateTrailerData();
+        //getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
     }
 
     @Override
-    public void onStart(){
-        super.onStart();
-        updateMovieData();
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Log.v(LOG_TAG, "in on create loader");
+
+        //Uri movieUri = MovieContract.MovieEntry.buildDetailWithMovie(mMovieId);
+
+        Log.v(LOG_TAG, "movie uri: " + MovieContract.MovieEntry.CONTENT_URI);
+
+        return new CursorLoader(
+                getActivity(),
+                MovieContract.MovieEntry.CONTENT_URI,
+                MOVIE_COLUMNS,
+                null,
+                null,
+                null
+        );
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        mMovieAdapter.swapCursor(cursor);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        mMovieAdapter.swapCursor(null);
     }
 
     public class FetchMovieTask extends AsyncTask<String, Void, Movie[]> {
@@ -97,13 +183,13 @@ public class MovieFragment extends Fragment {
         private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
 
         private final Context mContext;
-        private ImageAdapter mMovieAdapter;
+        //private ImageAdapter mMovieAdapter;
 
-        public FetchMovieTask(Context context, ImageAdapter movieAdapter) {
+        public FetchMovieTask(Context context) {
             Log.v(LOG_TAG, "in constructor ");
 
             mContext = context;
-            mMovieAdapter = movieAdapter;
+            //mMovieAdapter = movieAdapter;
 
         }
 
@@ -192,7 +278,7 @@ public class MovieFragment extends Fragment {
             return null;
         }
 
-        @Override
+       /* @Override
         protected void onPostExecute(Movie[] result) {
             if(result != null) {
                 ArrayList<String> urls = new ArrayList<String>();
@@ -209,7 +295,7 @@ public class MovieFragment extends Fragment {
                 //update view
                 mMovieAdapter.update(urls);
             }
-        }
+        }*/
 
         private Movie[] getMovieDataFromJson(String movieJsonStr, int numMovies) throws JSONException {
             final String RESULTS = "results";
@@ -255,6 +341,9 @@ public class MovieFragment extends Fragment {
                 movieValues.put(MovieContract.MovieEntry.COLUMN_SYNOPSIS, synopsis);
                 movieValues.put(MovieContract.MovieEntry.COLUMN_POSTER_URL, posterUrl);
 
+                updateReviewData(movieId);
+                updateTrailerData(movieId);
+
                 cVVector.add(movieValues);
 
                 results[i] = new Movie(movieId, title, releaseDate, voteAvg, synopsis, posterUrl);
@@ -270,6 +359,18 @@ public class MovieFragment extends Fragment {
             Log.v(LOG_TAG, "Fetch movie task Complete. " + cVVector.size() + " Inserted");
 
             return results;
+        }
+
+        private void updateReviewData(int movieId){
+            Log.v(LOG_TAG, "In update review data");
+
+            FetchReviewTask fetchReviewTask = new FetchReviewTask(getActivity());
+            fetchReviewTask.execute(movieId);
+        }
+
+        private void updateTrailerData(int movieId){
+            FetchTrailerTask fetchTrailerTask = new FetchTrailerTask(getActivity());
+            fetchTrailerTask.execute(movieId);
         }
     }
 }

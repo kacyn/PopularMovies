@@ -1,17 +1,30 @@
 package com.example.kacyn.popularmovies;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 public class MainActivity extends AppCompatActivity {
 
+    private final String LOG_TAG = MainActivity.class.getSimpleName();
+    private final String MOVIE_FRAGMENT_TAG = "MFTAG";
+
+    private String mSortPrefs;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mSortPrefs = Utility.getSortPreferences(this);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.container, new MovieFragment(), MOVIE_FRAGMENT_TAG)
+                    .commit();
+        }
     }
 
     @Override
@@ -38,4 +51,20 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        String sortPrefs = Utility.getSortPreferences(this);
+        // update the location in our second pane using the fragment manager
+        if (sortPrefs != null && !sortPrefs.equals(mSortPrefs)) {
+            MovieFragment mf = (MovieFragment)getSupportFragmentManager().findFragmentByTag(MOVIE_FRAGMENT_TAG);
+            if ( null != mf ) {
+                mf.onSortPrefsChanged();
+            }
+            mSortPrefs = sortPrefs;
+        }
+    }
+
 }

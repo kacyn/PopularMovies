@@ -7,10 +7,26 @@ import android.view.MenuItem;
 
 public class DetailActivity extends AppCompatActivity {
 
+    private final String LOG_TAG = MainActivity.class.getSimpleName();
+    private final String DETAIL_FRAGMENT_TAG = "DFTAG";
+
+    private String mSortPrefs;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mSortPrefs = Utility.getSortPreferences(this);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+
+        if (savedInstanceState == null) {
+
+            DetailActivityFragment df = new DetailActivityFragment();
+
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment, df)
+                    .commit();
+        }
     }
 
 
@@ -35,4 +51,19 @@ public class DetailActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+   /* @Override
+    protected void onResume() {
+        super.onResume();
+
+        String sortPrefs = Utility.getSortPreferences(this);
+        // update the location in our second pane using the fragment manager
+        if (sortPrefs != null && !sortPrefs.equals(mSortPrefs)) {
+            DetailActivityFragment df = (DetailActivityFragment)getSupportFragmentManager().findFragmentByTag(DETAIL_FRAGMENT_TAG);
+            if ( null != df ) {
+                df.onSortPrefsChanged();
+            }
+            mSortPrefs = sortPrefs;
+        }
+    }*/
 }
