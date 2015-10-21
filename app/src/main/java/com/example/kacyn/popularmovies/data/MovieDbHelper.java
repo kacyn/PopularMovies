@@ -13,7 +13,7 @@ import com.example.kacyn.popularmovies.data.MovieContract.TrailerEntry;
  */
 public class MovieDbHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
 
     static final String DATABASE_NAME = "movie.db";
 
@@ -56,7 +56,9 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 ReviewEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
 
                 " FOREIGN KEY (" + ReviewEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
-                MovieEntry.TABLE_NAME + " (" + MovieEntry.COLUMN_MOVIE_ID + "));";
+                MovieEntry.TABLE_NAME + " (" + MovieEntry.COLUMN_MOVIE_ID + ")," +
+
+                " UNIQUE (" + ReviewEntry.COLUMN_CONTENT + ") ON CONFLICT REPLACE);";
 
         db.execSQL(SQL_CREATE_MOVIE_TABLE);
         db.execSQL(SQL_CREATE_TRAILER_TABLE);

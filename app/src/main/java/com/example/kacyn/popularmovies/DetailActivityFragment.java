@@ -2,6 +2,8 @@ package com.example.kacyn.popularmovies;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -13,7 +15,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -123,6 +127,10 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     public TextView mReleaseDateView;
     public TextView mSynopsisView;
 
+    public LinearLayout mReviewLayout;
+    public LinearLayout mTrailerLayout;
+
+
     public DetailActivityFragment() {
     }
 
@@ -161,7 +169,14 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         mReleaseDateView = (TextView) rootView.findViewById(R.id.release_date_text);
         mSynopsisView = (TextView) rootView.findViewById(R.id.synopsis_text);
 
-        mTrailerAdapter = new TrailerAdapter(getActivity(), null, 0);
+
+
+        mReviewLayout = (LinearLayout) rootView.findViewById(R.id.review_layout);
+        mTrailerLayout = (LinearLayout) rootView.findViewById(R.id.trailer_layout);
+
+
+
+        /*mTrailerAdapter = new TrailerAdapter(getActivity(), null, 0);
         mTrailerListView = (ListView) rootView.findViewById(R.id.listview_trailer);
         mTrailerListView.setAdapter(mTrailerAdapter);
 
@@ -183,7 +198,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
         mReviewAdapter = new ReviewAdapter(getActivity(), null, 0);
         mReviewListView = (ListView) rootView.findViewById(R.id.listview_review);
-        mReviewListView.setAdapter(mReviewAdapter);
+        mReviewListView.setAdapter(mReviewAdapter);*/
 
         return rootView;
     }
@@ -202,9 +217,9 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
         //updateReviewData();
         //updateTrailerData();
-        getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
-        getLoaderManager().restartLoader(REVIEW_LOADER, null, this);
-        getLoaderManager().restartLoader(TRAILER_LOADER, null, this);
+        //getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
+        //getLoaderManager().restartLoader(REVIEW_LOADER, null, this);
+        //getLoaderManager().restartLoader(TRAILER_LOADER, null, this);
     }
 
    /* void onSortPrefsChanged() {
@@ -234,11 +249,17 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         fetchTrailerTask.execute(movieId);
     }*/
 
-   /* public long getReviewCount() {
+    public long getReviewCount() {
         SQLiteDatabase db = mOpenHelper.getReadableDatabase();
         String selection = "" + MovieContract.ReviewEntry.COLUMN_MOVIE_ID + " = " + mMovieId;
         return DatabaseUtils.queryNumEntries(db, MovieContract.ReviewEntry.TABLE_NAME, selection);
-    }*/
+    }
+
+    public long getTrailerCount() {
+        SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+        String selection = "" + MovieContract.ReviewEntry.COLUMN_MOVIE_ID + " = " + mMovieId;
+        return DatabaseUtils.queryNumEntries(db, MovieContract.TrailerEntry.TABLE_NAME, selection);
+    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle bundle) {
@@ -300,6 +321,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
         switch (loader.getId()) {
             case DETAIL_LOADER:
+                Log.v(LOG_TAG, "in detail loader case");
+
                 if(cursor != null && cursor.moveToFirst()) {
 
                     Picasso.with(getActivity()).load(cursor.getString(DetailActivityFragment.COL_DETAIL_POSTER_URL)).into(mPosterView);
@@ -317,13 +340,70 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                     mSynopsisView.setText(synopsis);
                 }
 
+                cursor.close();
+
                 //mDetailAdapter.swapCursor(cursor);
                 break;
             case REVIEW_LOADER:
-                mReviewAdapter.swapCursor(cursor);
+
+                Log.v(LOG_TAG, "in review loader case");
+
+                for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                //for (int i = 0; i < getReviewCount(); i++) {
+
+
+                    TextView authorView = new TextView(getActivity());
+                    String author = cursor.getString(DetailActivityFragment.COL_REVIEW_AUTHOR);
+                    authorView.setText("Author: " + author);
+
+                    mReviewLayout.addView(authorView);
+
+
+                    TextView contentView = new TextView(getActivity());
+                    String content = cursor.getString(DetailActivityFragment.COL_REVIEW_CONTENT);
+                    contentView.setText("Content: " + content);
+
+                    mReviewLayout.addView(contentView);
+
+                    Log.v(LOG_TAG, "author: " + author + " content: " + content);
+
+
+                }
+
+                cursor.close();
+
+                //mReviewAdapter.swapCursor(cursor);
                 break;
             case TRAILER_LOADER:
-                mTrailerAdapter.swapCursor(cursor);
+                //mTrailerAdapter.swapCursor(cursor);
+
+                Log.v(LOG_TAG, "in trailer loader case");
+
+
+                for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+
+                    Button button = new Button(getActivity());
+
+                    button.setId(cursor.getPosition());
+                    button.setText("Play Trailer " + (cursor.getPosition() + 1));
+
+                    final String trailerUrl = cursor.getString(COL_DETAIL_POSTER_URL);
+
+                    button.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + trailerUrl));
+                            startActivity(intent);
+                        }
+                    });
+
+                    mTrailerLayout.addView(button);
+
+                    Log.v(LOG_TAG, "trailer url: " + trailerUrl);
+                }
+
+                cursor.close();
+
                 break;
             default:
                 break;
@@ -339,10 +419,10 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                 //mDetailAdapter.swapCursor(null);
                 break;
             case REVIEW_LOADER:
-                mReviewAdapter.swapCursor(null);
+                //mReviewAdapter.swapCursor(null);
                 break;
             case TRAILER_LOADER:
-                mTrailerAdapter.swapCursor(null);
+                //mTrailerAdapter.swapCursor(null);
                 break;
             default:
                 break;
