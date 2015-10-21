@@ -3,6 +3,7 @@ package com.example.kacyn.popularmovies;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -57,10 +58,21 @@ public class MainActivity extends AppCompatActivity {
         String sortPrefs = Utility.getSortPreferences(this);
         // update the location in our second pane using the fragment manager
         if (sortPrefs != null && !sortPrefs.equals(mSortPrefs)) {
-            MovieFragment mf = (MovieFragment)getSupportFragmentManager().findFragmentByTag(MOVIE_FRAGMENT_TAG);
-            if ( null != mf ) {
-                mf.updateMovieData();
+
+            if(!sortPrefs.equals("favorites")) {
+
+                Log.v(LOG_TAG, "favorites not selected");
+
+                MovieFragment mf = (MovieFragment) getSupportFragmentManager().findFragmentByTag(MOVIE_FRAGMENT_TAG);
+                if (null != mf) {
+                    mf.updateMovieData();
+                }
+
             }
+            else {
+                Log.v(LOG_TAG, "favorites selected");
+            }
+
             mSortPrefs = sortPrefs;
         }
     }

@@ -33,7 +33,7 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
     }
 
     protected Void doInBackground(Void... params){
-        int numMoviesFetched = 15;
+        int numMoviesFetched = 20;
         String criterion = Utility.getSortPreferences(mContext);
         String order = "desc";
         int minVotes = 50;
@@ -154,6 +154,10 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
             movieValues.put(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE, voteAvg);
             movieValues.put(MovieContract.MovieEntry.COLUMN_SYNOPSIS, synopsis);
             movieValues.put(MovieContract.MovieEntry.COLUMN_POSTER_URL, posterUrl);
+
+            //false by default.
+            //TODO: make this keep user preferences
+            movieValues.put(MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE, false);
 
             updateReviewData(movieId);
             updateTrailerData(movieId);

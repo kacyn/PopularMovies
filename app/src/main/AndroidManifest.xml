@@ -36,6 +36,15 @@
                 android:value="com.example.kacyn.popularmovies.MainActivity" />
         </activity>
 
+      <!--  <activity
+            android:name=".SpinnerActivity"
+            android:label="@string/title_activity_spinner"
+            android:parentActivityName=".MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.kacyn.popularmovies.MainActivity" />
+        </activity> -->
+
         <provider
             android:authorities="com.example.kacyn.popularmovies"
             android:name="com.example.kacyn.popularmovies.data.MovieProvider" />

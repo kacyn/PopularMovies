@@ -1,31 +1,32 @@
 package com.example.kacyn.popularmovies;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.kacyn.popularmovies.data.MovieContract;
-import com.example.kacyn.popularmovies.data.MovieDbHelper;
 import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -84,11 +85,16 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     public TextView mReleaseDateView;
     public TextView mSynopsisView;
 
+    public CheckBox mFavoritesButton;
+
     public LinearLayout mReviewLayout;
     public LinearLayout mTrailerLayout;
 
+    private String mFirstTrailerUrl;
+    private ShareActionProvider mShareActionProvider;
 
     public DetailActivityFragment() {
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -106,6 +112,13 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         mReleaseDateView = (TextView) rootView.findViewById(R.id.release_date_text);
         mSynopsisView = (TextView) rootView.findViewById(R.id.synopsis_text);
 
+        mFavoritesButton = (CheckBox) rootView.findViewById(R.id.favorites_button);
+        mFavoritesButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                setFavoritesPreference(isChecked);
+            }
+        });
 
         mReviewLayout = (LinearLayout) rootView.findViewById(R.id.review_layout);
         mTrailerLayout = (LinearLayout) rootView.findViewById(R.id.trailer_layout);
@@ -208,6 +221,10 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
                 for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
 
+                    if(cursor.isFirst()) {
+                        mFirstTrailerUrl = cursor.getString(COL_DETAIL_POSTER_URL);
+                    }
+
                     Button button = new Button(getActivity());
 
                     button.setId(cursor.getPosition());
@@ -231,9 +248,56 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
             default:
                 break;
         }
+
+        // If onCreateOptionsMenu has already happened, we need to update the share intent now.
+        if (mShareActionProvider != null) {
+            mShareActionProvider.setShareIntent(createShareTrailerUrlIntent());
+        }
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.menu_detail_fragment, menu);
+
+        // Retrieve the share menu item
+        MenuItem menuItem = menu.findItem(R.id.action_share);
+
+        // Get the provider and hold onto it to set/change the share intent.
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+
+        // If onLoadFinished happens before this, we can go ahead and set the share intent now.
+        if (mFirstTrailerUrl != null) {
+            mShareActionProvider.setShareIntent(createShareTrailerUrlIntent());
+        }
+    }
+
+    private Intent createShareTrailerUrlIntent() {
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        shareIntent.setType("text/plain");
+
+        if(mFirstTrailerUrl == null) {
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "No trailer available to share!");
+        }
+        else {
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "https://www.youtube.com/watch?v=" + mFirstTrailerUrl);
+        }
+
+        return shareIntent;
+    }
+
+    public void setFavoritesPreference(boolean isFavorite) {
+        ContentValues favoritesValues = new ContentValues();
+        favoritesValues.put(MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE, isFavorite);
+
+        getActivity().getContentResolver().update(MovieContract.MovieEntry.CONTENT_URI, favoritesValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?", new String[]{"" + mMovieId});
+
+        Log.v(LOG_TAG, "marked favorite: " + isFavorite);
     }
 }

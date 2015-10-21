@@ -18,6 +18,12 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"/>
 
+        <CheckBox
+            android:id="@+id/favorites_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:button="@android:drawable/btn_star" />
+
         <TextView android:id="@+id/title_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
@@ -34,18 +40,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:id="@+id/trailer_layout"></LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:id="@+id/review_layout"></LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:id="@+id/trailer_layout"></LinearLayout>
 
     </LinearLayout>
 

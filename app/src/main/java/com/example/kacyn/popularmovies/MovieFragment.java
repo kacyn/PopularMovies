@@ -69,6 +69,8 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
+
+
         mMovieAdapter = new MovieAdapter(getActivity(), null, 0);
 
 
@@ -102,14 +104,42 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
-        return new CursorLoader(
-                getActivity(),
-                MovieContract.MovieEntry.CONTENT_URI,
-                MOVIE_COLUMNS,
-                null,
-                null,
-                null
-        );
+        //TODO: modify this to take into account sort order, user preferences
+        //only take top 20 movies
+
+        String sortPref = Utility.getSortPreferences(getActivity());
+
+        switch (sortPref) {
+            case "popularity":
+                return new CursorLoader(
+                        getActivity(),
+                        MovieContract.MovieEntry.CONTENT_URI,
+                        MOVIE_COLUMNS,
+                        null,
+                        null,
+                        "" + MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE + " DESC LIMIT 20"
+                );
+            case "vote_avg":
+                return new CursorLoader(
+                        getActivity(),
+                        MovieContract.MovieEntry.CONTENT_URI,
+                        MOVIE_COLUMNS,
+                        null,
+                        null,
+                        "" + MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE + " DESC LIMIT 20"
+                );
+            case "favorites":
+                return new CursorLoader(
+                        getActivity(),
+                        MovieContract.MovieEntry.CONTENT_URI,
+                        MOVIE_COLUMNS,
+                        null,
+                        null,
+                        "" + MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE + " DESC LIMIT 20"
+                );
+            default:
+                return null;
+        }
     }
 
     @Override

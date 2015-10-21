@@ -96,6 +96,7 @@ public class MovieProvider extends ContentProvider {
                 sortOrder);
     }
 
+
     static UriMatcher buildUriMatcher() {
 
         final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -316,6 +317,8 @@ public class MovieProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        Log.v("movie provider", "in update");
+
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
         int rowsUpdated;
@@ -324,6 +327,8 @@ public class MovieProvider extends ContentProvider {
             case MOVIE:
                 rowsUpdated = db.update(MovieContract.MovieEntry.TABLE_NAME, values, selection,
                         selectionArgs);
+
+                Log.v("movie provider", "movie updated");
                 break;
             case TRAILER:
                 rowsUpdated = db.update(MovieContract.TrailerEntry.TABLE_NAME, values, selection,
