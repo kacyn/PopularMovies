@@ -52,18 +52,4 @@ public class DetailActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-   /* @Override
-    protected void onResume() {
-        super.onResume();
-
-        String sortPrefs = Utility.getSortPreferences(this);
-        // update the location in our second pane using the fragment manager
-        if (sortPrefs != null && !sortPrefs.equals(mSortPrefs)) {
-            DetailActivityFragment df = (DetailActivityFragment)getSupportFragmentManager().findFragmentByTag(DETAIL_FRAGMENT_TAG);
-            if ( null != df ) {
-                df.onSortPrefsChanged();
-            }
-            mSortPrefs = sortPrefs;
-        }
-    }*/
 }

@@ -1,32 +1,42 @@
 package com.example.kacyn.popularmovies;
 
-/**
- * Created by Kacyn on 10/17/2015.
- */
-/*public class FetchMovieTask extends AsyncTask<String, Void, Movie[]> {
+import android.content.ContentValues;
+import android.content.Context;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.util.Log;
+
+import com.example.kacyn.popularmovies.data.MovieContract;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Vector;
+
+public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
 
     private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
 
     private final Context mContext;
-    private ImageAdapter mMovieAdapter;
 
-    public FetchMovieTask(Context context, ImageAdapter movieAdapter) {
+    public FetchMovieTask(Context context) {
         Log.v(LOG_TAG, "in constructor ");
 
         mContext = context;
-        mMovieAdapter = movieAdapter;
-
     }
 
-    protected Movie[] doInBackground(String... params){
+    protected Void doInBackground(Void... params){
         int numMoviesFetched = 15;
-        String criterion = "";
+        String criterion = Utility.getSortPreferences(mContext);
         String order = "desc";
         int minVotes = 50;
-
-        if(params.length > 0){
-            criterion = params[0];
-        }
 
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
@@ -103,26 +113,7 @@ package com.example.kacyn.popularmovies;
         return null;
     }
 
-    @Override
-    protected void onPostExecute(Movie[] result) {
-        if(result != null) {
-            ArrayList<String> urls = new ArrayList<String>();
-
-            //clear previous data
-            //movieArray.clear();
-
-            //add new information
-            for(int i = 0; i < result.length; i++){
-                urls.add(result[i].mPosterUrl);
-                //movieArray.add(result[i]);
-            }
-
-            //update view
-            mMovieAdapter.update(urls);
-        }
-    }
-
-    private Movie[] getMovieDataFromJson(String movieJsonStr, int numMovies) throws JSONException {
+    private Void getMovieDataFromJson(String movieJsonStr, int numMovies) throws JSONException {
         final String RESULTS = "results";
         final String MOVIE_ID = "id";
         final String TITLE = "original_title";
@@ -144,8 +135,6 @@ package com.example.kacyn.popularmovies;
         // Insert the new review information into the database
         Vector<ContentValues> cVVector = new Vector<ContentValues>(movieArray.length());
 
-        Movie[] results = new Movie[numMovies];
-
         for(int i = 0; i < numMovies; i++) {
             // Get the JSON object representing the day
             JSONObject movieData = movieArray.getJSONObject(i);
@@ -166,10 +155,13 @@ package com.example.kacyn.popularmovies;
             movieValues.put(MovieContract.MovieEntry.COLUMN_SYNOPSIS, synopsis);
             movieValues.put(MovieContract.MovieEntry.COLUMN_POSTER_URL, posterUrl);
 
+            updateReviewData(movieId);
+            updateTrailerData(movieId);
+
             cVVector.add(movieValues);
 
-            results[i] = new Movie(movieId, title, releaseDate, voteAvg, synopsis, posterUrl);
         }
+
         // add to database
         if ( cVVector.size() > 0 ) {
             ContentValues[] cvArray = new ContentValues[cVVector.size()];
@@ -179,8 +171,18 @@ package com.example.kacyn.popularmovies;
 
         Log.v(LOG_TAG, "Fetch movie task Complete. " + cVVector.size() + " Inserted");
 
-
-
-        return results;
+        return null;
     }
-}*/
+
+    private void updateReviewData(int movieId){
+        Log.v(LOG_TAG, "In update review data");
+
+        FetchReviewTask fetchReviewTask = new FetchReviewTask(mContext);
+        fetchReviewTask.execute(movieId);
+    }
+
+    private void updateTrailerData(int movieId){
+        FetchTrailerTask fetchTrailerTask = new FetchTrailerTask(mContext);
+        fetchTrailerTask.execute(movieId);
+    }
+}

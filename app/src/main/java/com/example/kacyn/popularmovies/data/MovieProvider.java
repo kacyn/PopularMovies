@@ -37,48 +37,6 @@ public class MovieProvider extends ContentProvider {
         sMovieByIdQueryBuilder.setTables(MovieContract.MovieEntry.TABLE_NAME);
         sMovieWithReviewsQueryBuilder.setTables(MovieContract.ReviewEntry.TABLE_NAME);
         sMovieWithTrailersQueryBuilder.setTables(MovieContract.TrailerEntry.TABLE_NAME);
-
-        /*sMovieByIdQueryBuilder.setTables(
-                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
-                        MovieContract.ReviewEntry.TABLE_NAME +
-                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
-                        "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID +
-                        " = " + MovieContract.ReviewEntry.TABLE_NAME +
-                        "." + MovieContract.ReviewEntry.COLUMN_MOVIE_ID +
-                        " INNER JOIN " +
-                        MovieContract.TrailerEntry.TABLE_NAME +
-                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
-                        "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID +
-                        " = " + MovieContract.TrailerEntry.TABLE_NAME +
-                        "." + MovieContract.TrailerEntry.COLUMN_MOVIE_ID);*/
-
-        /*sMovieByIdQueryBuilder.setTables(
-                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
-                        MovieContract.TrailerEntry.TABLE_NAME +
-                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
-                        "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID +
-                        " = " + MovieContract.TrailerEntry.TABLE_NAME +
-                        "." + MovieContract.TrailerEntry.COLUMN_MOVIE_ID);*/
-
-        //This is an inner join which looks like
-        //movie INNER JOIN review ON movie.movie_id = review.movie_id
-        /*sMovieWithReviewsQueryBuilder.setTables(
-                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
-                        MovieContract.ReviewEntry.TABLE_NAME +
-                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
-                        "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID +
-                        " = " + MovieContract.ReviewEntry.TABLE_NAME +
-                        "." + MovieContract.ReviewEntry.COLUMN_MOVIE_ID);*/
-
-        //This is an inner join which looks like
-        //movie INNER JOIN trailer ON movie.movie_id = trailer.movie_id
-       /* sMovieWithTrailersQueryBuilder.setTables(
-                MovieContract.MovieEntry.TABLE_NAME + " INNER JOIN " +
-                        MovieContract.TrailerEntry.TABLE_NAME +
-                        " ON " + MovieContract.MovieEntry.TABLE_NAME +
-                        "." + MovieContract.MovieEntry.COLUMN_MOVIE_ID +
-                        " = " + MovieContract.TrailerEntry.TABLE_NAME +
-                        "." + MovieContract.TrailerEntry.COLUMN_MOVIE_ID);*/
     }
 
     //TODO: getMovieByFavoritesSetting

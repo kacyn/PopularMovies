@@ -51,14 +51,6 @@ public class MovieContract {
         public static int getMovieIdFromUri(Uri uri){
             return Integer.parseInt(uri.getPathSegments().get(1));
         }
-
-        public static Uri buildMovieWithUrl(String url){
-            return CONTENT_URI.buildUpon().appendPath(url).build();
-        }
-
-        /*public static int getIdFromUri(Uri uri){
-            return Integer.parseInt(uri.getPathSegments().get(1));
-        }*/
     }
 
     public static final class ReviewEntry implements BaseColumns {
