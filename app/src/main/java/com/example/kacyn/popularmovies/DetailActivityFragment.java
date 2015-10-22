@@ -113,6 +113,9 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         mSynopsisView = (TextView) rootView.findViewById(R.id.synopsis_text);
 
         mFavoritesButton = (CheckBox) rootView.findViewById(R.id.favorites_button);
+
+        mFavoritesButton.setChecked(getFavoritesPreference());
+
         mFavoritesButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -296,8 +299,27 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         ContentValues favoritesValues = new ContentValues();
         favoritesValues.put(MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE, isFavorite);
 
-        getActivity().getContentResolver().update(MovieContract.MovieEntry.CONTENT_URI, favoritesValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?", new String[]{"" + mMovieId});
+        getActivity().getContentResolver().update(MovieContract.MovieEntry.CONTENT_URI,
+                favoritesValues,
+                MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?",
+                new String[]{"" + mMovieId});
 
         Log.v(LOG_TAG, "marked favorite: " + isFavorite);
+    }
+
+    public boolean getFavoritesPreference() {
+        Cursor cursor = getActivity().getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI,
+                new String[]{MovieContract.MovieEntry._ID, MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE},
+                MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?",
+                new String[]{"" + mMovieId},
+                null);
+
+        boolean isFavorite = false;
+
+        if (cursor != null && cursor.moveToFirst()) {
+            if(cursor.getInt(1) == 1) isFavorite = true;
+        }
+
+        return isFavorite;
     }
 }

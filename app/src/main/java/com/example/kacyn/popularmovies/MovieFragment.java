@@ -99,6 +99,12 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
         FetchMovieTask fetchMovieTask = new FetchMovieTask(getActivity());//, mMovieAdapter);
         fetchMovieTask.execute();
         getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
+        Log.v(LOG_TAG, "updated loader");
+    }
+
+    public void updateFavoritesLoader() {
+        getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
+        Log.v(LOG_TAG, "updated loader");
     }
 
     @Override
@@ -107,19 +113,25 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
         //TODO: modify this to take into account sort order, user preferences
         //only take top 20 movies
 
+        Log.v(LOG_TAG, "in on loader create");
+
         String sortPref = Utility.getSortPreferences(getActivity());
+
+        Log.v(LOG_TAG, "sort pref: " + sortPref);
 
         switch (sortPref) {
             case "popularity":
+                Log.v(LOG_TAG, "sort by popularity");
                 return new CursorLoader(
                         getActivity(),
                         MovieContract.MovieEntry.CONTENT_URI,
                         MOVIE_COLUMNS,
                         null,
                         null,
-                        "" + MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE + " DESC LIMIT 20"
+                        "" + MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC LIMIT 20"
                 );
-            case "vote_avg":
+            case "vote_average":
+                Log.v(LOG_TAG, "sort by vote avg");
                 return new CursorLoader(
                         getActivity(),
                         MovieContract.MovieEntry.CONTENT_URI,
@@ -129,15 +141,17 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
                         "" + MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE + " DESC LIMIT 20"
                 );
             case "favorites":
+                Log.v(LOG_TAG, "sort by favorites");
                 return new CursorLoader(
                         getActivity(),
                         MovieContract.MovieEntry.CONTENT_URI,
                         MOVIE_COLUMNS,
-                        null,
-                        null,
+                        MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE + " = ?",
+                        new String[]{"1"},
                         "" + MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE + " DESC LIMIT 20"
                 );
             default:
+                Log.v(LOG_TAG, "not caught by case statements");
                 return null;
         }
     }

@@ -58,19 +58,10 @@ public class MainActivity extends AppCompatActivity {
         String sortPrefs = Utility.getSortPreferences(this);
         // update the location in our second pane using the fragment manager
         if (sortPrefs != null && !sortPrefs.equals(mSortPrefs)) {
-
-            if(!sortPrefs.equals("favorites")) {
-
-                Log.v(LOG_TAG, "favorites not selected");
-
-                MovieFragment mf = (MovieFragment) getSupportFragmentManager().findFragmentByTag(MOVIE_FRAGMENT_TAG);
-                if (null != mf) {
-                    mf.updateMovieData();
-                }
-
-            }
-            else {
-                Log.v(LOG_TAG, "favorites selected");
+            MovieFragment mf = (MovieFragment) getSupportFragmentManager().findFragmentByTag(MOVIE_FRAGMENT_TAG);
+            if (null != mf) {
+                if(sortPrefs.equals("favorites")) mf.updateFavoritesLoader();
+                else mf.updateMovieData();
             }
 
             mSortPrefs = sortPrefs;

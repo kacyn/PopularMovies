@@ -119,6 +119,7 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
         final String TITLE = "original_title";
         final String RELEASE_DATE = "release_date";
         final String VOTE_AVG = "vote_average";
+        final String POPULARITY = "popularity";
         final String SYNOPSIS = "overview";
         final String POSTER_URL = "poster_path";
 
@@ -126,6 +127,7 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
         String title;
         String releaseDate;
         double voteAvg;
+        double popularity;
         String synopsis;
         String posterUrl;
 
@@ -143,6 +145,7 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
             title = movieData.getString(TITLE);
             releaseDate = movieData.getString(RELEASE_DATE);
             voteAvg = movieData.getDouble(VOTE_AVG);
+            popularity = movieData.getDouble(POPULARITY);
             synopsis = movieData.getString(SYNOPSIS);
             posterUrl = "http://image.tmdb.org/t/p/w342" + movieData.getString(POSTER_URL);
 
@@ -152,12 +155,13 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
             movieValues.put(MovieContract.MovieEntry.COLUMN_TITLE, title);
             movieValues.put(MovieContract.MovieEntry.COLUMN_RELEASE_DATE, releaseDate);
             movieValues.put(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE, voteAvg);
+            movieValues.put(MovieContract.MovieEntry.COLUMN_POPULARITY, popularity);
             movieValues.put(MovieContract.MovieEntry.COLUMN_SYNOPSIS, synopsis);
             movieValues.put(MovieContract.MovieEntry.COLUMN_POSTER_URL, posterUrl);
 
             //false by default.
             //TODO: make this keep user preferences
-            movieValues.put(MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE, false);
+            //movieValues.put(MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE, false);
 
             updateReviewData(movieId);
             updateTrailerData(movieId);
