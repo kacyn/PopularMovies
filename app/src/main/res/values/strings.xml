@@ -34,4 +34,7 @@
     <string name="movie_intent">Movie Intent</string>
     <string name="detail_args">Detail Args</string>
 
+    <string name="trailer_title"><u>Trailers</u></string>
+    <string name="review_title"><u>Reviews</u></string>
+
 </resources>

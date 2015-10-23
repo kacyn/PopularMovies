@@ -90,8 +90,13 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     public LinearLayout mReviewLayout;
     public LinearLayout mTrailerLayout;
 
+    public boolean mReviewDataAlreadyLoaded;
+    public boolean mTrailerDataAlreadyLoaded;
+
     private String mFirstTrailerUrl;
     private ShareActionProvider mShareActionProvider;
+
+    private LayoutInflater mLayoutInflater;
 
     public DetailActivityFragment() {
         setHasOptionsMenu(true);
@@ -107,6 +112,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
             Log.v(LOG_TAG, "movie id: " + mMovieId);
         }
+
+        mLayoutInflater = inflater;
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
@@ -136,15 +143,35 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
 
+        Log.v(LOG_TAG, "on activity created.  initializing loaders");
+
+        mReviewDataAlreadyLoaded = false;
+        mTrailerDataAlreadyLoaded = false;
+
+        super.onActivityCreated(savedInstanceState);
+
+        //setRetainInstance(true);
+    }
+
+    @Override
+    public void onResume() {
+
+        Log.v(LOG_TAG, "in on resume");
+
+
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
         getLoaderManager().initLoader(REVIEW_LOADER, null, this);
         getLoaderManager().initLoader(TRAILER_LOADER, null, this);
 
-        super.onActivityCreated(savedInstanceState);
+        super.onResume();
+
+
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle bundle) {
+
+        Log.v(LOG_TAG, "in on create loader.  loader type: " + loaderId);
 
         Uri detailUri = MovieContract.MovieEntry.buildDetailWithMovie(mMovieId);
         Uri reviewUri = MovieContract.ReviewEntry.buildReviewWithMovie(mMovieId);
@@ -184,6 +211,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
 
+        Log.v(LOG_TAG, "in on load finished");
+
         switch (loader.getId()) {
             case DETAIL_LOADER:
                 if(cursor != null && cursor.moveToFirst()) {
@@ -194,10 +223,10 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                     mTitleView.setText(title);
 
                     double voteAvg = cursor.getDouble(DetailActivityFragment.COL_DETAIL_VOTE_AVERAGE);
-                    mVoteAvgView.setText("Vote Average: " + voteAvg);
+                    mVoteAvgView.setText(voteAvg + "/10");
 
                     String releaseDate = cursor.getString(DetailActivityFragment.COL_DETAIL_RELEASE_DATE);
-                    mReleaseDateView.setText("Release Date: " + releaseDate);
+                    mReleaseDateView.setText("Released: " + releaseDate);
 
                     String synopsis = cursor.getString(DetailActivityFragment.COL_DETAIL_SYNOPSIS);
                     mSynopsisView.setText(synopsis);
@@ -206,51 +235,88 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                 break;
             case REVIEW_LOADER:
 
-                for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                Log.v(LOG_TAG, "review data loaded? " + mReviewDataAlreadyLoaded);
 
-                    TextView authorView = new TextView(getActivity());
-                    String author = cursor.getString(DetailActivityFragment.COL_REVIEW_AUTHOR);
-                    authorView.setText("Author: " + author);
+                if(!mReviewDataAlreadyLoaded) {
+                    for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+//                    cursor.moveToFirst();
 
-                    mReviewLayout.addView(authorView);
+//                    do {
+                        Log.v(LOG_TAG, "creating review layout.  cursor position: " + cursor.getPosition());
+
+                        View reviewView = mLayoutInflater.inflate(R.layout.list_item_review, null);
+
+                        if (cursor.isFirst()) {
+                            TextView reviewSectionView = (TextView) reviewView.findViewById(R.id.list_item_review_title);
+                            reviewSectionView.setText(getText(R.string.review_title));
+                        }
+
+                        TextView authorView = (TextView) reviewView.findViewById(R.id.list_item_review_author);
+//                    TextView authorView = new TextView(getActivity());
+                        String author = cursor.getString(DetailActivityFragment.COL_REVIEW_AUTHOR);
+                        authorView.setText("Author: " + author);
+
+//                    mReviewLayout.addView(authorView);
 
 
-                    TextView contentView = new TextView(getActivity());
-                    String content = cursor.getString(DetailActivityFragment.COL_REVIEW_CONTENT);
-                    contentView.setText("Content: " + content);
+//                    TextView contentView = new TextView(getActivity());
+                        TextView contentView = (TextView) reviewView.findViewById(R.id.list_item_review_content);
+                        String content = cursor.getString(DetailActivityFragment.COL_REVIEW_CONTENT);
+                        contentView.setText("" + content);
 
-                    mReviewLayout.addView(contentView);
+//                    mReviewLayout.addView(contentView);
 
+                        mReviewLayout.addView(reviewView);
+//                    } while (cursor.moveToNext());
+                    }
+                    mReviewDataAlreadyLoaded = true;
                 }
-
                 break;
             case TRAILER_LOADER:
 
-                for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                Log.v(LOG_TAG, "trailer data loaded? " + mTrailerDataAlreadyLoaded);
 
-                    if(cursor.isFirst()) {
-                        mFirstTrailerUrl = cursor.getString(COL_DETAIL_POSTER_URL);
-                    }
+                if(!mTrailerDataAlreadyLoaded) {
+                    for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+//                    cursor.moveToFirst();
 
-                    Button button = new Button(getActivity());
+//                    do {
+                        Log.v(LOG_TAG, "creating trailer layout.  cursor position: " + cursor.getPosition());
 
-                    button.setId(cursor.getPosition());
-                    button.setText("Play Trailer " + (cursor.getPosition() + 1));
 
-                    final String trailerUrl = cursor.getString(COL_DETAIL_POSTER_URL);
 
-                    button.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + trailerUrl));
-                            startActivity(intent);
+                        View trailerView = mLayoutInflater.inflate(R.layout.list_item_trailer, null);
+
+                        if (cursor.isFirst()) {
+                            mFirstTrailerUrl = cursor.getString(COL_DETAIL_POSTER_URL);
+//
+//                            TextView trailerSectionView = (TextView) trailerView.findViewById(R.id.list_item_trailer_title);
+//                            trailerSectionView.setText(getText(R.string.trailer_title));
                         }
-                    });
 
-                    mTrailerLayout.addView(button);
+//                    Button button = new Button(getActivity());
 
+                        Button button = (Button) trailerView.findViewById(R.id.list_item_trailer_button);
+                        button.setId(cursor.getPosition());
+                        button.setText("Watch Trailer " + (cursor.getPosition() + 1));
+
+                        final String trailerUrl = cursor.getString(COL_DETAIL_POSTER_URL);
+
+                        button.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + trailerUrl));
+                                startActivity(intent);
+                            }
+                        });
+
+//                    mTrailerLayout.addView(button);
+                        mTrailerLayout.addView(trailerView);
+
+//                    } while (cursor.moveToNext());
+                    }
+                    mTrailerDataAlreadyLoaded = true;
                 }
-
                 break;
             default:
                 break;
