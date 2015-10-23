@@ -1,6 +1,5 @@
 package com.example.kacyn.popularmovies;
 
-import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -13,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.ListView;
 
 import com.example.kacyn.popularmovies.data.MovieContract;
 
@@ -21,6 +21,10 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     public static String LOG_TAG = MovieFragment.class.getSimpleName();
 
     private MovieAdapter mMovieAdapter;
+    private GridView mGridView;
+
+    private int mPosition = GridView.INVALID_POSITION;
+    private static final String SELECTED_KEY = "selected_position";
 
     private static final int MOVIE_LOADER = 0;
 
@@ -36,6 +40,11 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
 
     public MovieFragment() {
         Log.v(LOG_TAG, "in constructor of movie fragment");
+    }
+
+    public interface Callback {
+
+        void onItemSelected(int movieId);
     }
 
     @Override
@@ -66,31 +75,38 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-
-
         mMovieAdapter = new MovieAdapter(getActivity(), null, 0);
 
+        mGridView = (GridView) rootView.findViewById(R.id.gridview_movies);
+        mGridView.setAdapter(mMovieAdapter);
 
-        GridView gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
-        gridView.setAdapter(mMovieAdapter);
-
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
 
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                 if (cursor != null) {
-                    Intent detailIntent = new Intent(getActivity(), DetailActivity.class);
-
-                    //launch detail view
-                    detailIntent.putExtra("MovieIntent", cursor.getInt(COL_MOVIE_ID));
-                    startActivity(detailIntent);
+                    ((Callback) getActivity())
+                            .onItemSelected(cursor.getInt(COL_MOVIE_ID));
                 }
+
+                mPosition = position;
             }
         });
+
+        // If there's instance state, mine it for useful information.
+        // The end-goal here is that the user never knows that turning their device sideways
+        // does crazy lifecycle related things.  It should feel like some stuff stretched out,
+        // or magically appeared to take advantage of room, but data or place in the app was never
+        // actually *lost*.
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
+            // The listview probably hasn't even been populated yet.  Actually perform the
+            // swapout in onLoadFinished.
+            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
+
+        //mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
 
         return rootView;
     }
@@ -105,6 +121,17 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     public void updateFavoritesLoader() {
         getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
         Log.v(LOG_TAG, "updated loader");
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        // When tablets rotate, the currently selected list item needs to be saved.
+        // When no item is selected, mPosition will be set to Listview.INVALID_POSITION,
+        // so check for that before storing.
+        if (mPosition != ListView.INVALID_POSITION) {
+            outState.putInt(SELECTED_KEY, mPosition);
+        }
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -159,6 +186,11 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         mMovieAdapter.swapCursor(cursor);
+        if (mPosition != ListView.INVALID_POSITION) {
+            // If we don't need to restart the loader, and there's a desired position to restore
+            // to, do so now.
+            mGridView.smoothScrollToPosition(mPosition);
+        }
     }
 
     @Override

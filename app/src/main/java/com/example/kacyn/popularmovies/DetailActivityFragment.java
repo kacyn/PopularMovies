@@ -100,11 +100,15 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            mMovieId = arguments.getInt(getString(R.string.detail_args));
+
+            Log.v(LOG_TAG, "movie id: " + mMovieId);
+        }
+
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-
-        Intent intent = getActivity().getIntent();
-
-        mMovieId = intent.getIntExtra("MovieIntent", -1);
 
         mPosterView = (ImageView) rootView.findViewById(R.id.poster_image);
         mTitleView = (TextView) rootView.findViewById(R.id.title_text);

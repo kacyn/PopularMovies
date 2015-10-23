@@ -1,10 +1,11 @@
 
-
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/container"
-    tools:context=".MainActivity"
-    tools:ignore="MergeRootFrame"
+    android:id="@+id/fragment_movie"
+    android:name="com.example.kacyn.popularmovies.MovieFragment"
+    tools:context="com.example.kacyn.popularmovies.MovieFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
+   <!-- tools:ignore="MergeRootFrame" -->
+
 

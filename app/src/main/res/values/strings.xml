@@ -31,4 +31,7 @@
 
     <string name="action_share">Share</string>
 
+    <string name="movie_intent">Movie Intent</string>
+    <string name="detail_args">Detail Args</string>
+
 </resources>

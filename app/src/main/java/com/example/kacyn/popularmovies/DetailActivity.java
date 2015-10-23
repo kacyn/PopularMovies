@@ -7,28 +7,25 @@ import android.view.MenuItem;
 
 public class DetailActivity extends AppCompatActivity {
 
-    private final String LOG_TAG = MainActivity.class.getSimpleName();
-    private final String DETAIL_FRAGMENT_TAG = "DFTAG";
-
-    private String mSortPrefs;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        mSortPrefs = Utility.getSortPreferences(this);
-
         super.onCreate(savedInstanceState);
+        //mSortPrefs = Utility.getSortPreferences(this);
         setContentView(R.layout.activity_detail);
 
         if (savedInstanceState == null) {
 
+            Bundle args = new Bundle();
+            args.putInt(getString(R.string.detail_args), getIntent().getIntExtra(getString(R.string.movie_intent), -1));
+
             DetailActivityFragment df = new DetailActivityFragment();
+            df.setArguments(args);
 
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragment, df)
+                    .add(R.id.detail_container, df)
                     .commit();
         }
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
