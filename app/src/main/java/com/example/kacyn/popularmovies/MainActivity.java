@@ -18,14 +18,10 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.v(LOG_TAG, "in on create");
         super.onCreate(savedInstanceState);
-        Log.v(LOG_TAG, "created super!");
         mSortPrefs = Utility.getSortPreferences(this);
-        Log.v(LOG_TAG, "retrieved sort prefs");
 
         setContentView(R.layout.activity_main);
-        Log.v(LOG_TAG, "created main activity");
 
         if (findViewById(R.id.detail_container) != null) {
 
@@ -87,18 +83,12 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
                 else mf.updateMovieData();
             }
 
-            DetailActivityFragment df = (DetailActivityFragment)getSupportFragmentManager().findFragmentByTag(DETAIL_FRAGMENT_TAG);
-            if( null != df ) {
-                //df.updateMo
-            }
-
             mSortPrefs = sortPrefs;
         }
     }
 
     @Override
     public void onItemSelected(int movieId) {
-        Log.v(LOG_TAG, "in on item selected.  movie id: " + movieId);
 
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
@@ -115,8 +105,6 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
                     .commit();
         }
         else {
-            Log.v(LOG_TAG, "checking that i made it to the phone view.  movie id: " + movieId);
-
             Intent intent = new Intent(this, DetailActivity.class);
             intent.putExtra(getString(R.string.movie_intent), movieId);
             startActivity(intent);

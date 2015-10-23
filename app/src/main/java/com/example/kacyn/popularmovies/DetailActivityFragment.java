@@ -226,7 +226,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                     mVoteAvgView.setText(voteAvg + "/10");
 
                     String releaseDate = cursor.getString(DetailActivityFragment.COL_DETAIL_RELEASE_DATE);
-                    mReleaseDateView.setText("Released: " + releaseDate);
+                    mReleaseDateView.setText(releaseDate.substring(0, 4));
 
                     String synopsis = cursor.getString(DetailActivityFragment.COL_DETAIL_SYNOPSIS);
                     mSynopsisView.setText(synopsis);
