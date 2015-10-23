@@ -10,7 +10,6 @@ import android.view.MenuItem;
 public class MainActivity extends AppCompatActivity implements MovieFragment.Callback {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
-    //private final String MOVIE_FRAGMENT_TAG = "MFTAG";
     private final String DETAIL_FRAGMENT_TAG = "DFTAG";
 
     private boolean mTwoPane;
@@ -91,9 +90,6 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
     public void onItemSelected(int movieId) {
 
         if (mTwoPane) {
-            // In two-pane mode, show the detail view in this activity by
-            // adding or replacing the detail fragment using a
-            // fragment transaction.
             Bundle args = new Bundle();
             args.putInt(getString(R.string.detail_args), movieId);
 

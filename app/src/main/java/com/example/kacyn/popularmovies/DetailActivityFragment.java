@@ -235,15 +235,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                 break;
             case REVIEW_LOADER:
 
-                Log.v(LOG_TAG, "review data loaded? " + mReviewDataAlreadyLoaded);
-
                 if(!mReviewDataAlreadyLoaded) {
                     for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-//                    cursor.moveToFirst();
-
-//                    do {
-                        Log.v(LOG_TAG, "creating review layout.  cursor position: " + cursor.getPosition());
-
                         View reviewView = mLayoutInflater.inflate(R.layout.list_item_review, null);
 
                         if (cursor.isFirst()) {
@@ -252,49 +245,27 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                         }
 
                         TextView authorView = (TextView) reviewView.findViewById(R.id.list_item_review_author);
-//                    TextView authorView = new TextView(getActivity());
                         String author = cursor.getString(DetailActivityFragment.COL_REVIEW_AUTHOR);
                         authorView.setText("Author: " + author);
 
-//                    mReviewLayout.addView(authorView);
-
-
-//                    TextView contentView = new TextView(getActivity());
                         TextView contentView = (TextView) reviewView.findViewById(R.id.list_item_review_content);
                         String content = cursor.getString(DetailActivityFragment.COL_REVIEW_CONTENT);
                         contentView.setText("" + content);
 
-//                    mReviewLayout.addView(contentView);
-
                         mReviewLayout.addView(reviewView);
-//                    } while (cursor.moveToNext());
                     }
                     mReviewDataAlreadyLoaded = true;
                 }
                 break;
             case TRAILER_LOADER:
-
-                Log.v(LOG_TAG, "trailer data loaded? " + mTrailerDataAlreadyLoaded);
-
                 if(!mTrailerDataAlreadyLoaded) {
                     for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-//                    cursor.moveToFirst();
-
-//                    do {
-                        Log.v(LOG_TAG, "creating trailer layout.  cursor position: " + cursor.getPosition());
-
-
-
                         View trailerView = mLayoutInflater.inflate(R.layout.list_item_trailer, null);
 
+                        //store first trailer url for share intent
                         if (cursor.isFirst()) {
                             mFirstTrailerUrl = cursor.getString(COL_DETAIL_POSTER_URL);
-//
-//                            TextView trailerSectionView = (TextView) trailerView.findViewById(R.id.list_item_trailer_title);
-//                            trailerSectionView.setText(getText(R.string.trailer_title));
                         }
-
-//                    Button button = new Button(getActivity());
 
                         Button button = (Button) trailerView.findViewById(R.id.list_item_trailer_button);
                         button.setId(cursor.getPosition());
@@ -310,10 +281,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                             }
                         });
 
-//                    mTrailerLayout.addView(button);
                         mTrailerLayout.addView(trailerView);
-
-//                    } while (cursor.moveToNext());
                     }
                     mTrailerDataAlreadyLoaded = true;
                 }
