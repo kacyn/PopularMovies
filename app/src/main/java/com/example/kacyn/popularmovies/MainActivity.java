@@ -3,7 +3,6 @@ package com.example.kacyn.popularmovies;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -23,11 +22,9 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
         setContentView(R.layout.activity_main);
 
         if (findViewById(R.id.detail_container) != null) {
-
-            Log.v(LOG_TAG, "In tablet case");
-
             mTwoPane = true;
 
+            //create detail fragment in tablet case
             if (savedInstanceState == null) {
                 getSupportFragmentManager().beginTransaction()
                         .add(R.id.detail_container, new DetailActivityFragment(), DETAIL_FRAGMENT_TAG)
@@ -35,15 +32,9 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
             }
         }
         else {
-            Log.v(LOG_TAG, "in phone case");
-
             mTwoPane = false;
             getSupportActionBar().setElevation(0f);
         }
-
-        MovieFragment movieFragment = ((MovieFragment)getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_movie));
-        //movieFragment.setUseTodayLayout(!mTwoPane);
     }
 
     @Override
@@ -55,7 +46,6 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
@@ -74,14 +64,14 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
         super.onResume();
 
         String sortPrefs = Utility.getSortPreferences(this);
-        // update the location in our second pane using the fragment manager
+
+        // update movie fragment with new preferences
         if (sortPrefs != null && !sortPrefs.equals(mSortPrefs)) {
             MovieFragment mf = (MovieFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_movie);
             if (null != mf) {
                 if(sortPrefs.equals("favorites")) mf.updateFavoritesLoader();
                 else mf.updateMovieData();
             }
-
             mSortPrefs = sortPrefs;
         }
     }
@@ -93,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
             Bundle args = new Bundle();
             args.putInt(getString(R.string.detail_args), movieId);
 
+            //pass movie id to detail fragment
             DetailActivityFragment fragment = new DetailActivityFragment();
             fragment.setArguments(args);
 
@@ -101,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
                     .commit();
         }
         else {
+            //start detail activity via intent
             Intent intent = new Intent(this, DetailActivity.class);
             intent.putExtra(getString(R.string.movie_intent), movieId);
             startActivity(intent);

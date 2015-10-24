@@ -43,7 +43,6 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     public interface Callback {
-
         void onItemSelected(int movieId);
     }
 
@@ -59,15 +58,11 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
 
         //first time view created
         if(savedInstanceState == null){
-            Log.v(LOG_TAG, "new movie fragment");
             updateMovieData();
-        }
-        else {
-            Log.v(LOG_TAG, "old movie fragment");
         }
 
         super.onCreate(savedInstanceState);
-        // Add this line in order for this fragment to handle menu events.
+
         setHasOptionsMenu(true);
     }
 
@@ -79,12 +74,14 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
         mMovieAdapter = new MovieAdapter(getActivity(), null, 0);
 
         mGridView = (GridView) rootView.findViewById(R.id.gridview_movies);
+        View emptyView = rootView.findViewById(R.id.empty_gridview);
+        mGridView.setEmptyView(emptyView);
         mGridView.setAdapter(mMovieAdapter);
 
+        //trigger callback when movie selected
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                 if (cursor != null) {
                     ((Callback) getActivity())
@@ -106,8 +103,6 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
             mPosition = savedInstanceState.getInt(SELECTED_KEY);
         }
 
-        //mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
-
         return rootView;
     }
 
@@ -115,12 +110,10 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
         FetchMovieTask fetchMovieTask = new FetchMovieTask(getActivity());//, mMovieAdapter);
         fetchMovieTask.execute();
         getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
-        Log.v(LOG_TAG, "updated loader");
     }
 
     public void updateFavoritesLoader() {
         getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
-        Log.v(LOG_TAG, "updated loader");
     }
 
     @Override
@@ -136,19 +129,10 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-
-        //TODO: modify this to take into account sort order, user preferences
-        //only take top 20 movies
-
-        Log.v(LOG_TAG, "in on loader create");
-
         String sortPref = Utility.getSortPreferences(getActivity());
-
-        Log.v(LOG_TAG, "sort pref: " + sortPref);
 
         switch (sortPref) {
             case "popularity":
-                Log.v(LOG_TAG, "sort by popularity");
                 return new CursorLoader(
                         getActivity(),
                         MovieContract.MovieEntry.CONTENT_URI,
@@ -158,7 +142,6 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
                         "" + MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC LIMIT 20"
                 );
             case "vote_average":
-                Log.v(LOG_TAG, "sort by vote avg");
                 return new CursorLoader(
                         getActivity(),
                         MovieContract.MovieEntry.CONTENT_URI,
@@ -168,17 +151,15 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
                         "" + MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE + " DESC LIMIT 20"
                 );
             case "favorites":
-                Log.v(LOG_TAG, "sort by favorites");
                 return new CursorLoader(
                         getActivity(),
                         MovieContract.MovieEntry.CONTENT_URI,
                         MOVIE_COLUMNS,
                         MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE + " = ?",
                         new String[]{"1"},
-                        "" + MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE + " DESC LIMIT 20"
+                        "" + MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE + " DESC"
                 );
             default:
-                Log.v(LOG_TAG, "not caught by case statements");
                 return null;
         }
     }
@@ -187,8 +168,6 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         mMovieAdapter.swapCursor(cursor);
         if (mPosition != ListView.INVALID_POSITION) {
-            // If we don't need to restart the loader, and there's a desired position to restore
-            // to, do so now.
             mGridView.smoothScrollToPosition(mPosition);
         }
     }

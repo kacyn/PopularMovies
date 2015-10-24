@@ -30,8 +30,6 @@ public class FetchReviewTask extends AsyncTask<Integer, Void, Void> {
     private final Context mContext;
 
     public FetchReviewTask(Context context) {
-        Log.v(LOG_TAG, "in constructor ");
-
         mContext = context;
     }
 
@@ -67,8 +65,6 @@ public class FetchReviewTask extends AsyncTask<Integer, Void, Void> {
             content = reviewData.getString(CONTENT);
             url = reviewData.getString(URL);
 
-            //Log.v(LOG_TAG, "author: " + author + " content: " + content + " url: " + url);
-
             ContentValues reviewValues = new ContentValues();
 
             reviewValues.put(MovieContract.ReviewEntry.COLUMN_AUTHOR, author);
@@ -77,7 +73,6 @@ public class FetchReviewTask extends AsyncTask<Integer, Void, Void> {
             reviewValues.put(MovieContract.ReviewEntry.COLUMN_MOVIE_ID, movieId);
 
             cVVector.add(reviewValues);
-            //mReviewArray.add(new Review(author, content, url));
         }
 
         // add to database
@@ -147,9 +142,6 @@ public class FetchReviewTask extends AsyncTask<Integer, Void, Void> {
                 return null;
             }
             reviewJsonStr = buffer.toString();
-
-            //Log.v(LOG_TAG, reviewJsonStr);
-
             getReviewDataFromJson(reviewJsonStr);
 
         } catch (IOException e) {

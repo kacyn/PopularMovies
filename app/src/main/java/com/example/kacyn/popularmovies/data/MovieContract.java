@@ -67,11 +67,10 @@ public class MovieContract {
         //table name
         public static final String TABLE_NAME = "review";
 
-        //table columns
-
         //foreign key to movie table
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
+        //table columns
         public static final String COLUMN_AUTHOR = "author";
         public static final String COLUMN_CONTENT = "content";
         public static final String COLUMN_REVIEW_URL = "review_url";
@@ -117,6 +116,4 @@ public class MovieContract {
             return Integer.parseInt(uri.getPathSegments().get(1));
         }
     }
-
-
 }

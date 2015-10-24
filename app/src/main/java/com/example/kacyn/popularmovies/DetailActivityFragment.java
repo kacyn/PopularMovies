@@ -11,7 +11,6 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.ShareActionProvider;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -28,9 +27,6 @@ import android.widget.TextView;
 import com.example.kacyn.popularmovies.data.MovieContract;
 import com.squareup.picasso.Picasso;
 
-/**
- * A placeholder fragment containing a simple view.
- */
 public class DetailActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static String LOG_TAG = DetailActivityFragment.class.getSimpleName();
@@ -38,9 +34,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     private static final int DETAIL_LOADER = 0;
     private static final int REVIEW_LOADER = 1;
     private static final int TRAILER_LOADER = 2;
-    // For the forecast view we're showing only a small subset of the stored data.
-    // Specify the columns we need.
 
+    //columns needed for each loader
     private static final String[] DETAIL_COLUMNS = {
             MovieContract.MovieEntry._ID,
             MovieContract.MovieEntry.COLUMN_POSTER_URL,
@@ -61,8 +56,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
             MovieContract.TrailerEntry.COLUMN_YOUTUBE_KEY
     };
 
-    // These indices are tied to FORECAST_COLUMNS.  If FORECAST_COLUMNS changes, these
-    // must change.
+    // indices for columns
     static final int COL_DETAIL_ID = 0;
     static final int COL_DETAIL_POSTER_URL = 1;
     static final int COL_DETAIL_TITLE = 2;
@@ -106,17 +100,17 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        //retrieve movie id from bundle
         Bundle arguments = getArguments();
         if (arguments != null) {
             mMovieId = arguments.getInt(getString(R.string.detail_args));
-
-            Log.v(LOG_TAG, "movie id: " + mMovieId);
         }
 
         mLayoutInflater = inflater;
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
 
+        //movie detail views
         mPosterView = (ImageView) rootView.findViewById(R.id.poster_image);
         mTitleView = (TextView) rootView.findViewById(R.id.title_text);
         mVoteAvgView = (TextView) rootView.findViewById(R.id.vote_avg_text);
@@ -124,9 +118,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
         mSynopsisView = (TextView) rootView.findViewById(R.id.synopsis_text);
 
         mFavoritesButton = (CheckBox) rootView.findViewById(R.id.favorites_button);
-
         mFavoritesButton.setChecked(getFavoritesPreference());
-
         mFavoritesButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -134,6 +126,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
             }
         });
 
+        //review and trailer layouts
         mReviewLayout = (LinearLayout) rootView.findViewById(R.id.review_layout);
         mTrailerLayout = (LinearLayout) rootView.findViewById(R.id.trailer_layout);
 
@@ -142,37 +135,25 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-
-        Log.v(LOG_TAG, "on activity created.  initializing loaders");
-
+        //keep track if dynamic data has already been loaded
         mReviewDataAlreadyLoaded = false;
         mTrailerDataAlreadyLoaded = false;
 
         super.onActivityCreated(savedInstanceState);
-
-        //setRetainInstance(true);
     }
 
     @Override
     public void onResume() {
-
-        Log.v(LOG_TAG, "in on resume");
-
-
+        //initialize loaders
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
         getLoaderManager().initLoader(REVIEW_LOADER, null, this);
         getLoaderManager().initLoader(TRAILER_LOADER, null, this);
 
         super.onResume();
-
-
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, Bundle bundle) {
-
-        Log.v(LOG_TAG, "in on create loader.  loader type: " + loaderId);
-
         Uri detailUri = MovieContract.MovieEntry.buildDetailWithMovie(mMovieId);
         Uri reviewUri = MovieContract.ReviewEntry.buildReviewWithMovie(mMovieId);
         Uri trailerUri = MovieContract.TrailerEntry.buildTrailerWithMovie(mMovieId);
@@ -210,10 +191,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-
-        Log.v(LOG_TAG, "in on load finished");
-
         switch (loader.getId()) {
+            //inflate detail view
             case DETAIL_LOADER:
                 if(cursor != null && cursor.moveToFirst()) {
 
@@ -233,8 +212,9 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                 }
 
                 break;
-            case REVIEW_LOADER:
 
+            //inflate review views dynamically
+            case REVIEW_LOADER:
                 if(!mReviewDataAlreadyLoaded) {
                     for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                         View reviewView = mLayoutInflater.inflate(R.layout.list_item_review, null);
@@ -257,6 +237,8 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                     mReviewDataAlreadyLoaded = true;
                 }
                 break;
+
+            //inflate trailer views dynamically
             case TRAILER_LOADER:
                 if(!mTrailerDataAlreadyLoaded) {
                     for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
@@ -318,7 +300,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     }
 
     private Intent createShareTrailerUrlIntent() {
-
+        //share youtube link
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
         shareIntent.setType("text/plain");
@@ -334,6 +316,7 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
     }
 
     public void setFavoritesPreference(boolean isFavorite) {
+        //keep track of favorites setting in database
         ContentValues favoritesValues = new ContentValues();
         favoritesValues.put(MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE, isFavorite);
 
@@ -341,11 +324,11 @@ public class DetailActivityFragment extends Fragment implements LoaderManager.Lo
                 favoritesValues,
                 MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?",
                 new String[]{"" + mMovieId});
-
-        Log.v(LOG_TAG, "marked favorite: " + isFavorite);
     }
 
     public boolean getFavoritesPreference() {
+
+        //retrieve favorites preference
         Cursor cursor = getActivity().getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI,
                 new String[]{MovieContract.MovieEntry._ID, MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE},
                 MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ?",

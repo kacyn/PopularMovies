@@ -10,11 +10,10 @@ public class DetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //mSortPrefs = Utility.getSortPreferences(this);
+
         setContentView(R.layout.activity_detail);
 
         if (savedInstanceState == null) {
-
             Bundle args = new Bundle();
             args.putInt(getString(R.string.detail_args), getIntent().getIntExtra(getString(R.string.movie_intent), -1));
 

@@ -27,8 +27,6 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
     private final Context mContext;
 
     public FetchMovieTask(Context context) {
-        Log.v(LOG_TAG, "in constructor ");
-
         mContext = context;
     }
 
@@ -159,10 +157,7 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
             movieValues.put(MovieContract.MovieEntry.COLUMN_SYNOPSIS, synopsis);
             movieValues.put(MovieContract.MovieEntry.COLUMN_POSTER_URL, posterUrl);
 
-            //false by default.
-            //TODO: make this keep user preferences
-            //movieValues.put(MovieContract.MovieEntry.COLUMN_MARKED_FAVORITE, false);
-
+            //update reviews and trailers based on movie id
             updateReviewData(movieId);
             updateTrailerData(movieId);
 
@@ -183,8 +178,6 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
     }
 
     private void updateReviewData(int movieId){
-        Log.v(LOG_TAG, "In update review data");
-
         FetchReviewTask fetchReviewTask = new FetchReviewTask(mContext);
         fetchReviewTask.execute(movieId);
     }

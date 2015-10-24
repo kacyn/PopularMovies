@@ -7,7 +7,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
-import android.util.Log;
 
 /**
  * Created by Kacyn on 10/9/2015.
@@ -24,7 +23,6 @@ public class MovieProvider extends ContentProvider {
     static final int TRAILER = 300;
     static final int TRAILER_WITH_MOVIE_ID = 301;
 
-    //TODO: add joins here
     private static final SQLiteQueryBuilder sMovieWithReviewsQueryBuilder;
     private static final SQLiteQueryBuilder sMovieWithTrailersQueryBuilder;
     private static final SQLiteQueryBuilder sMovieByIdQueryBuilder;
@@ -38,8 +36,6 @@ public class MovieProvider extends ContentProvider {
         sMovieWithReviewsQueryBuilder.setTables(MovieContract.ReviewEntry.TABLE_NAME);
         sMovieWithTrailersQueryBuilder.setTables(MovieContract.TrailerEntry.TABLE_NAME);
     }
-
-    //TODO: getMovieByFavoritesSetting
 
     private static final String sMovieIdSelection =
             MovieContract.MovieEntry.TABLE_NAME +
@@ -73,8 +69,6 @@ public class MovieProvider extends ContentProvider {
     private Cursor getReviewByMovieId(Uri uri, String[] projection, String sortOrder) {
         int movieId = MovieContract.ReviewEntry.getMovieIdFromUri(uri);
 
-        Log.v("Review adapter", "parsed out movie id: " + movieId);
-
         return sMovieWithReviewsQueryBuilder.query(mOpenHelper.getReadableDatabase(),
                 projection,
                 sReviewMovieIdSelection,
@@ -103,7 +97,6 @@ public class MovieProvider extends ContentProvider {
         final String authority = MovieContract.CONTENT_AUTHORITY;
 
         matcher.addURI(authority, MovieContract.PATH_MOVIE, MOVIE);
-        //TODO: check this
         matcher.addURI(authority, MovieContract.PATH_MOVIE + "/#", MOVIE_WITH_ID);
         matcher.addURI(authority, MovieContract.PATH_TRAILER, TRAILER);
         matcher.addURI(authority, MovieContract.PATH_TRAILER + "/#", TRAILER_WITH_MOVIE_ID);
@@ -143,8 +136,6 @@ public class MovieProvider extends ContentProvider {
         }
     }
 
-
-
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
 
@@ -153,39 +144,16 @@ public class MovieProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)) {
             case MOVIE_WITH_ID: {
                 retCursor = getMovieByMovieId(uri, projection, sortOrder);
-
-                if(retCursor == null){
-                    Log.v("Detail ada", "in query, cursor is null");
-                }
-                else Log.v("Detail adapter", "in query, cursor is valid");
-
-
-                Log.v("Detail adapter", "return cursor 0th element: " + retCursor.moveToFirst());
                 break;
             }
 
             case REVIEW_WITH_MOVIE_ID: {
                 retCursor = getReviewByMovieId(uri, projection, sortOrder);
-                if(retCursor == null){
-                    Log.v("Review Adapter", "in query, cursor is null");
-                }
-                else Log.v("Review Adapter", "in query, cursor is valid");
-
-                Log.v("Review adapter", "review uri: " + uri);
-
-                Log.v("Review adapter", "return cursor 0th element: " + retCursor.moveToFirst());
                 break;
             }
 
             case TRAILER_WITH_MOVIE_ID: {
                 retCursor = getTrailerByMovieId(uri, projection, sortOrder);
-                if(retCursor == null){
-                    Log.v("Review trailer Adapter", "in query, cursor is null");
-                }
-                else Log.v("Review trailer Adapter", "in query, cursor is valid");
-
-
-                Log.v("Review trailer adapter", "return cursor 0th element: " + retCursor.moveToFirst());
                 break;
             }
 
@@ -199,11 +167,6 @@ public class MovieProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
-
-                if(retCursor == null){
-                    Log.v("Movie Adapter", "in query, cursor is null");
-                }
-                else Log.v("Movie Adapter", "in query, cursor is valid");
             }
             break;
             case TRAILER: {
@@ -234,7 +197,6 @@ public class MovieProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
-
 
         retCursor.setNotificationUri(getContext().getContentResolver(), uri);
         return retCursor;
@@ -317,8 +279,6 @@ public class MovieProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        Log.v("movie provider", "in update");
-
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
         int rowsUpdated;
@@ -327,8 +287,6 @@ public class MovieProvider extends ContentProvider {
             case MOVIE:
                 rowsUpdated = db.update(MovieContract.MovieEntry.TABLE_NAME, values, selection,
                         selectionArgs);
-
-                Log.v("movie provider", "movie updated");
                 break;
             case TRAILER:
                 rowsUpdated = db.update(MovieContract.TrailerEntry.TABLE_NAME, values, selection,

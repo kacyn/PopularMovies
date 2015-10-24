@@ -2,7 +2,6 @@ package com.example.kacyn.popularmovies;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,15 +21,11 @@ public class MovieAdapter extends CursorAdapter {
 
     public MovieAdapter(Context context, Cursor c, int flags) {
         super(context, c, flags);
-
         mLayoutInflater = LayoutInflater.from(context);
-        Log.v(LOG_TAG, "in constructor for movie adapter");
     }
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        Log.v(LOG_TAG, "In new view");
-
         View view = mLayoutInflater.inflate(R.layout.list_item_poster, parent, false);
 
         ViewHolder viewHolder = new ViewHolder(view);
@@ -41,9 +36,6 @@ public class MovieAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-
-        Log.v(LOG_TAG, "In bind view");
-
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
         String posterUrl = cursor.getString(MovieFragment.COL_POSTER_URL);

@@ -20,7 +20,6 @@
         android:id="@+id/gridview_movies"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:columnWidth="90dp"
         android:numColumns="auto_fit"
         android:stretchMode="columnWidth"
         android:verticalSpacing="2dp"

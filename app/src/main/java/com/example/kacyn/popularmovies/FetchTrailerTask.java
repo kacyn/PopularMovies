@@ -28,14 +28,10 @@ public class FetchTrailerTask extends AsyncTask<Integer, Void, Void> {
     private final Context mContext;
 
     public FetchTrailerTask(Context context) {
-        Log.v(LOG_TAG, "in constructor ");
-
         mContext = context;
     }
 
     private void getTrailerDataFromJson(String trailerJsonStr) throws JSONException {
-        //mTrailerUrlArray.clear();
-
         final String RESULTS = "results";
         final String KEY = "key";
         final String MOVIE_ID = "id";
@@ -64,7 +60,6 @@ public class FetchTrailerTask extends AsyncTask<Integer, Void, Void> {
             trailerValues.put(MovieContract.TrailerEntry.COLUMN_MOVIE_ID, movieId);
 
             cVVector.add(trailerValues);
-            //mTrailerUrlArray.add(key);
         }
 
         // add to database
